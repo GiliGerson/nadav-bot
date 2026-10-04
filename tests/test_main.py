@@ -95,3 +95,31 @@ def test_api_reads_need_the_dashboard_header(load_app):
     client = TestClient(load_app(), base_url="http://localhost")
     assert client.get("/api/snapshot/AAPL").status_code == 403
     assert client.get("/api/watchlist").status_code == 403
+
+
+# --- Local polling must not take the bot away from a deployment ---------------
+
+from types import SimpleNamespace  # noqa: E402
+from unittest.mock import AsyncMock  # noqa: E402
+
+from app.bot import ensure_no_live_webhook  # noqa: E402
+
+
+def fake_application(webhook_url: str, force: bool = False):
+    bot = SimpleNamespace(get_webhook_info=AsyncMock(return_value=SimpleNamespace(url=webhook_url)))
+    return SimpleNamespace(bot=bot, bot_data={"settings": SimpleNamespace(force_polling=force)})
+
+
+async def test_polling_refuses_while_a_webhook_is_live():
+    with pytest.raises(RuntimeError, match="deployed"):
+        await ensure_no_live_webhook(fake_application("https://nadav-bot.onrender.com/telegram/webhook"))
+
+
+async def test_polling_allowed_without_webhook():
+    await ensure_no_live_webhook(fake_application(""))
+
+
+async def test_force_polling_skips_the_check():
+    app = fake_application("https://nadav-bot.onrender.com/telegram/webhook", force=True)
+    await ensure_no_live_webhook(app)
+    app.bot.get_webhook_info.assert_not_called()

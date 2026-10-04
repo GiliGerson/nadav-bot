@@ -335,11 +335,33 @@ async def register_commands(application: Application) -> None:
     await application.bot.set_my_commands(COMMANDS)
 
 
+async def ensure_no_live_webhook(application: Application) -> None:
+    """Stop local polling from silently taking the bot away from a deployment.
+
+    Starting to poll deletes the webhook, so the deployed bot would stop receiving
+    messages with no error anywhere. Refuse unless FORCE_POLLING is set.
+    """
+    if application.bot_data["settings"].force_polling:
+        return
+    info = await application.bot.get_webhook_info()
+    if info.url:
+        raise RuntimeError(
+            f"This bot is deployed (webhook active at {info.url}). Polling would switch the "
+            "deployed bot off. Stop it first, use a separate test bot token, or set "
+            "FORCE_POLLING=true to take the bot back on purpose."
+        )
+
+
+async def _post_init_polling(application: Application) -> None:
+    await ensure_no_live_webhook(application)
+    await register_commands(application)
+
+
 def build_application(settings: Settings, *, webhook_mode: bool) -> Application:
     builder = (
         Application.builder()
         .token(settings.telegram_bot_token)
-        .post_init(register_commands)
+        .post_init(register_commands if webhook_mode else _post_init_polling)
         # Updates are handled one at a time by default, so a few slow requests (Yahoo, Claude)
         # from strangers would queue up everyone else's, the owner's included.
         .concurrent_updates(CONCURRENT_UPDATES)

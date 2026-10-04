@@ -116,9 +116,12 @@ For the bot alone, `python -m app.polling` works too.
 Any host that runs Docker works (Render, Railway, Fly.io):
 
 1. Deploy this repo using the included `Dockerfile`.
-2. Set the env vars from `.env.example`, including `WEBHOOK_BASE_URL` (your app's public URL), a `DASHBOARD_PASSWORD` of 16+ characters, and a random `WEBHOOK_SECRET` of 32+ characters (`python -c "import secrets; print(secrets.token_urlsafe(32))"`).
-3. Attach a persistent disk at `/app/data`. Without one, the watchlist and the daily AI counter reset on every deploy.
-4. On startup the app registers its webhook with Telegram automatically. Check `GET /health`.
+2. Set the env vars from `.env.example`: `TELEGRAM_BOT_TOKEN`, `ANTHROPIC_API_KEY`, `AI_ALLOWED_USER_IDS`, a `DASHBOARD_PASSWORD` of 16+ characters, and a random `WEBHOOK_SECRET` of 32+ characters (`python -c "import secrets; print(secrets.token_urlsafe(32))"`).
+3. Set `WEBHOOK_BASE_URL` to the app's public URL. On Render this is automatic (it reads `RENDER_EXTERNAL_URL`).
+4. Attach a persistent disk at `/app/data` if the host offers one. Without it, the watchlist and the daily AI counter reset whenever the container restarts (e.g. on Render's free plan, which also sleeps after 15 idle minutes; the first message then takes about a minute, and is kept rather than dropped).
+5. On startup the app registers its webhook with Telegram automatically. Check `GET /health`.
+
+Once deployed, local polling refuses to start with the same bot token, since it would switch the deployed bot off. Use a separate test bot locally, or set `FORCE_POLLING=true` to take the bot back on purpose.
 
 ## Tests
 

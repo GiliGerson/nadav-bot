@@ -3,7 +3,7 @@ import logging
 from functools import lru_cache
 from typing import Annotated
 
-from pydantic import field_validator, model_validator
+from pydantic import AliasChoices, Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 # Placeholder secrets that are public (in this repo), so they must never guard a live webhook.
@@ -13,7 +13,7 @@ MIN_DASHBOARD_PASSWORD_LENGTH = 16
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore", populate_by_name=True)
 
     telegram_bot_token: str
     anthropic_api_key: str
@@ -31,7 +31,10 @@ class Settings(BaseSettings):
     # SQLite file shared by the watchlist and the daily AI usage counter.
     watchlist_db_path: str = "data/watchlist.db"
 
-    webhook_base_url: str | None = None
+    # Render sets RENDER_EXTERNAL_URL to the service's public URL, so no manual step is needed there.
+    webhook_base_url: str | None = Field(
+        default=None, validation_alias=AliasChoices("WEBHOOK_BASE_URL", "RENDER_EXTERNAL_URL")
+    )
     webhook_secret: str = "change-me"
 
     # HTTP Basic auth for the dashboard and JSON API. Optional locally (the server only
@@ -41,6 +44,9 @@ class Settings(BaseSettings):
     # Set when the server is reachable from the internet without a webhook (e.g. polling
     # inside a container bound to 0.0.0.0). The Dockerfile sets it, so images are safe by default.
     public_deployment: bool = False
+    # Local polling refuses to start while a webhook is live (it would silently switch the
+    # deployed bot off). Set this to take the bot back from the deployment on purpose.
+    force_polling: bool = False
 
     @property
     def webhook_mode(self) -> bool:

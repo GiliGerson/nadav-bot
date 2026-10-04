@@ -16,7 +16,7 @@ from pydantic import BaseModel
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 from telegram import Update
 
-from app.bot import build_application, register_commands
+from app.bot import build_application, ensure_no_live_webhook, register_commands
 from app.config import get_settings, setup_logging
 from app.market import MarketData, Snapshot, TickerNotFoundError
 from app.security import (
@@ -53,10 +53,14 @@ async def lifespan(app: FastAPI):
             url=url,
             secret_token=settings.webhook_secret,
             allowed_updates=Update.ALL_TYPES,
-            drop_pending_updates=True,
+            # Keep pending updates: on hosts that sleep when idle (Render's free plan), the
+            # message that woke the server is still pending here, and dropping it would
+            # silently swallow the user's first message.
+            drop_pending_updates=False,
         )
         logger.info("Webhook registered at %s", url)
     else:
+        await ensure_no_live_webhook(tg)
         await tg.updater.start_polling(allowed_updates=Update.ALL_TYPES)
         logger.info("WEBHOOK_BASE_URL not set; polling Telegram for updates.")
     app.state.tg = tg

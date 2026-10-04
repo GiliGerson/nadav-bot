@@ -43,3 +43,18 @@ def test_public_deployment_requires_password_but_not_webhook_secret():
         make(public_deployment=True)
     settings = make(public_deployment=True, dashboard_password=STRONG)
     assert settings.production and not settings.webhook_mode
+
+
+def test_render_external_url_enables_webhook_mode(monkeypatch):
+    monkeypatch.delenv("WEBHOOK_BASE_URL", raising=False)
+    monkeypatch.setenv("RENDER_EXTERNAL_URL", "https://nadav-bot.onrender.com")
+    settings = make(webhook_secret=STRONG, dashboard_password=STRONG)
+    assert settings.webhook_base_url == "https://nadav-bot.onrender.com"
+    assert settings.webhook_mode
+
+
+def test_explicit_webhook_url_wins_over_render_url(monkeypatch):
+    monkeypatch.setenv("WEBHOOK_BASE_URL", "https://nadav.example.com")
+    monkeypatch.setenv("RENDER_EXTERNAL_URL", "https://nadav-bot.onrender.com")
+    settings = make(webhook_secret=STRONG, dashboard_password=STRONG)
+    assert settings.webhook_base_url == "https://nadav.example.com"

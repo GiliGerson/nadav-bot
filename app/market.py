@@ -188,24 +188,39 @@ def build_snapshot(
 class MarketData:
     """Async facade over yfinance with a small in-memory TTL cache."""
 
-    def __init__(self, ttl_seconds: int = 300, max_entries: int = 1_000) -> None:
+    def __init__(self, ttl_seconds: int = 300, max_entries: int = 1_000, max_concurrent: int = 4) -> None:
         self._ttl = ttl_seconds
         self._max_entries = max_entries
-        self._cache: dict[str, tuple[float, Snapshot]] = {}
+        # None marks a symbol Yahoo has no data for, so repeated lookups of junk tickers
+        # (cheap for a spammer to send) don't each cost a Yahoo round trip.
+        self._cache: dict[str, tuple[float, Snapshot | None]] = {}
+        # Caps parallel Yahoo requests, so a burst can't monopolise the thread pool or get
+        # our IP throttled; extra requests wait their turn.
+        self._fetch_slots = asyncio.Semaphore(max_concurrent)
 
     async def get_snapshot(self, raw_ticker: str) -> Snapshot:
         ticker = normalize_ticker(raw_ticker)
         cached = self._cache.get(ticker)
         if cached and time.monotonic() - cached[0] < self._ttl:
+            if cached[1] is None:
+                raise TickerNotFoundError(ticker)
             return cached[1]
-        # yfinance is blocking, so keep it off the event loop.
-        snapshot = await asyncio.to_thread(self._fetch, ticker)
+        async with self._fetch_slots:
+            try:
+                # yfinance is blocking, so keep it off the event loop.
+                snapshot = await asyncio.to_thread(self._fetch, ticker)
+            except TickerNotFoundError:
+                self._store(ticker, None)
+                raise
+        self._store(ticker, snapshot)
+        return snapshot
+
+    def _store(self, ticker: str, snapshot: Snapshot | None) -> None:
         self._cache.pop(ticker, None)
         self._cache[ticker] = (time.monotonic(), snapshot)
         if len(self._cache) > self._max_entries:
             # Dicts keep insertion order, so the first key is the oldest fetch.
             del self._cache[next(iter(self._cache))]
-        return snapshot
 
     async def get_many(self, tickers: list[str]) -> list[Snapshot | Exception]:
         return await asyncio.gather(

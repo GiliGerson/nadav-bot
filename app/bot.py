@@ -39,6 +39,7 @@ AI_LIMIT_MESSAGE = (
 AI_RESTRICTED_MESSAGE = "AI analysis is limited to a private demo. Try /price or /market."
 # /market itself is open to everyone, so it can't point users back to /market.
 AI_RESTRICTED_MARKET_NOTE = "AI commentary is limited to a private demo."
+CONCURRENT_UPDATES = 8
 MARKET_TICKERS = ["^GSPC", "^IXIC", "^DJI", "^VIX", "^TA125.TA"]
 
 COMMANDS = [
@@ -330,7 +331,14 @@ async def register_commands(application: Application) -> None:
 
 
 def build_application(settings: Settings, *, webhook_mode: bool) -> Application:
-    builder = Application.builder().token(settings.telegram_bot_token).post_init(register_commands)
+    builder = (
+        Application.builder()
+        .token(settings.telegram_bot_token)
+        .post_init(register_commands)
+        # Updates are handled one at a time by default, so a few slow requests (Yahoo, Claude)
+        # from strangers would queue up everyone else's, the owner's included.
+        .concurrent_updates(CONCURRENT_UPDATES)
+    )
     if webhook_mode:
         builder = builder.updater(None)  # FastAPI receives updates instead
     application = builder.build()

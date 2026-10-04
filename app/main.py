@@ -11,7 +11,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, FastAPI, Header, HTTPException, Request
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 from telegram import Update
@@ -81,6 +81,22 @@ if not settings.production:
 protected = APIRouter(
     dependencies=[Depends(make_dashboard_auth(settings.dashboard_username, settings.dashboard_password))]
 )
+
+
+MAX_API_BODY_BYTES = 4096  # a watchlist add is ~20 bytes of JSON
+
+
+@app.middleware("http")
+async def limit_api_body_size(request: Request, call_next):
+    # FastAPI reads and parses the JSON body before running the auth dependency, so without
+    # this an anonymous client could post hundreds of MB and burn memory before getting a 401.
+    if request.url.path.startswith("/api/") and request.method in {"POST", "PUT", "PATCH"}:
+        length = request.headers.get("content-length")
+        if length is None:
+            return JSONResponse({"detail": "Content-Length required"}, status_code=411)
+        if not length.isdigit() or int(length) > MAX_API_BODY_BYTES:
+            return JSONResponse({"detail": "Request body too large"}, status_code=413)
+    return await call_next(request)
 
 
 @app.middleware("http")

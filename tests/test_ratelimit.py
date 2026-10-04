@@ -119,3 +119,42 @@ async def test_market_cache_is_bounded(monkeypatch, uptrend):
     for ticker in ["AAA", "BBB", "CCC", "DDD"]:
         await market.get_snapshot(ticker)
     assert list(market._cache) == ["BBB", "CCC", "DDD"]
+
+
+async def test_unknown_tickers_are_cached_as_missing(monkeypatch):
+    from app.market import TickerNotFoundError
+
+    calls = []
+
+    def fetch(ticker):
+        calls.append(ticker)
+        raise TickerNotFoundError(ticker)
+
+    monkeypatch.setattr(MarketData, "_fetch", staticmethod(fetch))
+    market = MarketData()
+    for _ in range(5):
+        with pytest.raises(TickerNotFoundError):
+            await market.get_snapshot("ZZZZQX")
+    assert calls == ["ZZZZQX"]
+
+
+async def test_parallel_yahoo_fetches_are_capped(monkeypatch, uptrend):
+    import asyncio
+    import threading
+
+    active, peak, lock = 0, 0, threading.Lock()
+
+    def fetch(ticker):
+        nonlocal active, peak
+        with lock:
+            active += 1
+            peak = max(peak, active)
+        threading.Event().wait(0.05)
+        with lock:
+            active -= 1
+        return build_snapshot(ticker, uptrend)
+
+    monkeypatch.setattr(MarketData, "_fetch", staticmethod(fetch))
+    market = MarketData(max_concurrent=2)
+    await asyncio.gather(*(market.get_snapshot(f"T{i}") for i in range(8)))
+    assert peak == 2

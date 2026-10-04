@@ -69,3 +69,22 @@ def test_local_mode_rejects_other_hosts(load_app):
     client = TestClient(load_app(), base_url="http://localhost")
     assert client.get("/health").status_code == 200
     assert client.get("/health", headers={"Host": "evil.example"}).status_code == 400
+
+
+def test_oversized_api_body_is_rejected_before_auth(load_app):
+    client = TestClient(load_app(PUBLIC_DEPLOYMENT="true", DASHBOARD_PASSWORD=PASSWORD))
+    res = client.post("/api/watchlist", content=b'{"ticker": "' + b"A" * 10_000 + b'"}',
+                      headers={"Content-Type": "application/json"})
+    assert res.status_code == 413
+
+
+def test_chunked_api_body_is_rejected(load_app):
+    client = TestClient(load_app(PUBLIC_DEPLOYMENT="true", DASHBOARD_PASSWORD=PASSWORD))
+    res = client.post("/api/watchlist", content=iter([b'{"ticker": "AAPL"}']),
+                      headers={"Content-Type": "application/json"})
+    assert res.status_code == 411
+
+
+def test_small_api_body_reaches_auth(load_app):
+    client = TestClient(load_app(PUBLIC_DEPLOYMENT="true", DASHBOARD_PASSWORD=PASSWORD))
+    assert client.post("/api/watchlist", json={"ticker": "AAPL"}).status_code == 401

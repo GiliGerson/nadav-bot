@@ -9,6 +9,7 @@ from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 # Placeholder secrets that are public (in this repo), so they must never guard a live webhook.
 KNOWN_PLACEHOLDER_SECRETS = {"change-me", "a-long-random-string_only-letters-digits-_-"}
 MIN_WEBHOOK_SECRET_LENGTH = 32
+MIN_DASHBOARD_PASSWORD_LENGTH = 16
 
 
 class Settings(BaseSettings):
@@ -32,6 +33,16 @@ class Settings(BaseSettings):
     webhook_base_url: str | None = None
     webhook_secret: str = "change-me"
 
+    # HTTP Basic auth for the dashboard and JSON API. Optional locally (the server only
+    # listens on localhost); required once deployed, see _require_production_secrets.
+    dashboard_username: str = "nadav"
+    dashboard_password: str = ""
+
+    @property
+    def production(self) -> bool:
+        """Webhook mode means a public URL, so every secret has to be real."""
+        return bool(self.webhook_base_url)
+
     @field_validator("ai_allowed_user_ids", mode="before")
     @classmethod
     def _split_user_ids(cls, value: object) -> object:
@@ -41,17 +52,25 @@ class Settings(BaseSettings):
         return value
 
     @model_validator(mode="after")
-    def _require_real_webhook_secret(self) -> "Settings":
+    def _require_production_secrets(self) -> "Settings":
+        if not self.production:
+            return self
+        generate = 'Generate one with: python -c "import secrets; print(secrets.token_urlsafe(32))"'
         # The secret header is the only proof a webhook request came from Telegram. With a
         # guessable one, anyone could post forged updates "from" an allowlisted user ID.
-        if self.webhook_base_url and (
+        if (
             self.webhook_secret in KNOWN_PLACEHOLDER_SECRETS
             or len(self.webhook_secret) < MIN_WEBHOOK_SECRET_LENGTH
         ):
             raise ValueError(
                 f"WEBHOOK_SECRET must be a random string of at least {MIN_WEBHOOK_SECRET_LENGTH} "
-                "characters when WEBHOOK_BASE_URL is set. Generate one with: "
-                'python -c "import secrets; print(secrets.token_urlsafe(32))"'
+                f"characters when WEBHOOK_BASE_URL is set. {generate}"
+            )
+        # A public dashboard would expose the owner's watchlist and let anyone edit it.
+        if len(self.dashboard_password) < MIN_DASHBOARD_PASSWORD_LENGTH:
+            raise ValueError(
+                f"DASHBOARD_PASSWORD must be at least {MIN_DASHBOARD_PASSWORD_LENGTH} characters "
+                f"when WEBHOOK_BASE_URL is set. {generate}"
             )
         return self
 

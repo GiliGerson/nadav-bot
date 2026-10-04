@@ -10,14 +10,21 @@ import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI, Header, HTTPException, Request
+from fastapi import APIRouter, Depends, FastAPI, Header, HTTPException, Request
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
+from starlette.middleware.trustedhost import TrustedHostMiddleware
 from telegram import Update
 
 from app.bot import build_application, register_commands
 from app.config import get_settings, setup_logging
 from app.market import MarketData, Snapshot, TickerNotFoundError
+from app.security import (
+    inline_script_hashes,
+    make_dashboard_auth,
+    require_csrf_header,
+    security_headers,
+)
 from app.signals import assess
 from app.watchlist import Watchlist
 
@@ -26,11 +33,14 @@ setup_logging(settings)
 logger = logging.getLogger("nadav")
 
 DASHBOARD = Path(__file__).parent / "static" / "dashboard.html"
+SECURITY_HEADERS = security_headers(
+    inline_script_hashes(DASHBOARD.read_text()), https=settings.production
+)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    webhook_mode = bool(settings.webhook_base_url)
+    webhook_mode = settings.production
     tg = build_application(settings, webhook_mode=webhook_mode)
     await tg.initialize()
     await tg.start()
@@ -57,7 +67,30 @@ async def lifespan(app: FastAPI):
     await tg.shutdown()
 
 
-app = FastAPI(title="Nadav", description="AI market analysis bot", lifespan=lifespan)
+# The interactive API docs map every endpoint for anyone; keep them local-only.
+docs = {} if not settings.production else {"docs_url": None, "redoc_url": None, "openapi_url": None}
+app = FastAPI(title="Nadav", description="AI market analysis bot", lifespan=lifespan, **docs)
+
+if not settings.production:
+    # Locally the dashboard has no password, so only answer requests addressed to this machine.
+    # This blocks DNS rebinding, where a malicious site points its own domain at 127.0.0.1
+    # and reads the dashboard through the owner's browser.
+    app.add_middleware(TrustedHostMiddleware, allowed_hosts=["localhost", "127.0.0.1"])
+
+# Everything that exposes or changes the owner's data sits behind the dashboard password.
+protected = APIRouter(
+    dependencies=[Depends(make_dashboard_auth(settings.dashboard_username, settings.dashboard_password))]
+)
+
+
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next):
+    response = await call_next(request)
+    response.headers.update(SECURITY_HEADERS)
+    if request.url.path != "/health":
+        # Watchlist data is personal: keep it out of browser and proxy caches.
+        response.headers["Cache-Control"] = "no-store"
+    return response
 
 
 @app.post("/telegram/webhook", include_in_schema=False)
@@ -90,7 +123,7 @@ async def _snapshot_or_http_error(market: MarketData, ticker: str) -> Snapshot:
         raise HTTPException(status_code=404, detail=f"No data for {ticker.upper()}") from exc
 
 
-@app.get("/api/snapshot/{ticker}")
+@protected.get("/api/snapshot/{ticker}")
 async def snapshot(ticker: str, request: Request) -> dict:
     """Indicator snapshot as JSON (no LLM call)."""
     return (await _snapshot_or_http_error(request.app.state.market, ticker)).to_dict()
@@ -102,12 +135,12 @@ class WatchlistAdd(BaseModel):
     ticker: str
 
 
-@app.get("/", include_in_schema=False)
+@protected.get("/", include_in_schema=False)
 async def dashboard() -> FileResponse:
     return FileResponse(DASHBOARD)
 
 
-@app.get("/api/watchlist")
+@protected.get("/api/watchlist")
 async def get_watchlist(request: Request) -> list[dict]:
     """Every watched ticker with its snapshot, signals, score and stance."""
     tickers = request.app.state.watchlist.tickers()
@@ -122,7 +155,7 @@ async def get_watchlist(request: Request) -> list[dict]:
     return rows
 
 
-@app.post("/api/watchlist", status_code=201)
+@protected.post("/api/watchlist", status_code=201, dependencies=[Depends(require_csrf_header)])
 async def add_to_watchlist(body: WatchlistAdd, request: Request) -> dict:
     # Fetch first, so typos and delisted symbols never make it into the list.
     snap = await _snapshot_or_http_error(request.app.state.market, body.ticker)
@@ -130,7 +163,9 @@ async def add_to_watchlist(body: WatchlistAdd, request: Request) -> dict:
     return {**snap.to_dict(), **assess(snap)}
 
 
-@app.delete("/api/watchlist/{ticker}", status_code=204)
+@protected.delete(
+    "/api/watchlist/{ticker}", status_code=204, dependencies=[Depends(require_csrf_header)]
+)
 async def remove_from_watchlist(ticker: str, request: Request) -> None:
     try:
         removed = request.app.state.watchlist.remove(ticker)
@@ -138,3 +173,6 @@ async def remove_from_watchlist(ticker: str, request: Request) -> None:
         raise HTTPException(status_code=400, detail=f"{ticker!r} doesn't look like a ticker") from exc
     if not removed:
         raise HTTPException(status_code=404, detail=f"{ticker.upper()} is not on the watchlist")
+
+
+app.include_router(protected)

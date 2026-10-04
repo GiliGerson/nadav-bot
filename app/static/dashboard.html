@@ -327,7 +327,10 @@
   }
 
   async function removeTicker(ticker) {
-    const res = await fetch(`/api/watchlist/${encodeURIComponent(ticker)}`, { method: "DELETE" });
+    const res = await fetch(`/api/watchlist/${encodeURIComponent(ticker)}`, {
+      method: "DELETE",
+      headers: { "X-Nadav-Dashboard": "1" },
+    });
     if (res.ok || res.status === 404) {
       rows = rows.filter((r) => r.ticker !== ticker);
       render();
@@ -344,7 +347,7 @@
     try {
       const res = await fetch("/api/watchlist", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "X-Nadav-Dashboard": "1" },
         body: JSON.stringify({ ticker }),
       });
       const data = await res.json();

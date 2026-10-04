@@ -17,11 +17,20 @@ def make(**overrides) -> Settings:
 ])
 def test_webhook_mode_rejects_guessable_secrets(secret):
     with pytest.raises(ValueError, match="WEBHOOK_SECRET"):
-        make(webhook_base_url="https://nadav.example.com", webhook_secret=secret)
+        make(webhook_base_url="https://nadav.example.com", webhook_secret=secret, dashboard_password=STRONG)
 
 
-def test_webhook_mode_accepts_random_secret():
-    assert make(webhook_base_url="https://nadav.example.com", webhook_secret=STRONG).webhook_secret == STRONG
+def test_webhook_mode_accepts_random_secrets():
+    settings = make(
+        webhook_base_url="https://nadav.example.com", webhook_secret=STRONG, dashboard_password=STRONG
+    )
+    assert settings.production
+
+
+@pytest.mark.parametrize("password", ["", "short-password"])
+def test_webhook_mode_requires_a_dashboard_password(password):
+    with pytest.raises(ValueError, match="DASHBOARD_PASSWORD"):
+        make(webhook_base_url="https://nadav.example.com", webhook_secret=STRONG, dashboard_password=password)
 
 
 @pytest.mark.parametrize("url", [None, ""])

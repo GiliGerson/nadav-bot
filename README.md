@@ -73,6 +73,7 @@ Indicators are computed in pure, unit-tested Python functions. The LLM does what
 - Blocking yfinance calls run in a thread pool so the event loop stays responsive
 - Graceful degradation: if Claude is down, users still get the indicator card
 - HTML escaping on everything, plus truncation to Telegram's 4096-char limit
+- Dashboard and JSON API behind HTTP Basic auth (required once deployed), with a CSRF header check on writes, a hash-based Content-Security-Policy, `no-store` caching, API docs disabled in production and a localhost-only Host check in local mode against DNS rebinding
 - Webhook endpoint verifies Telegram's secret token header (constant-time compare), and the app refuses to start in webhook mode with a placeholder or short secret, since a guessable one would let anyone forge updates from an allowlisted user
 
 **Two run modes, one codebase.** Long polling for local development, FastAPI webhook for production. The same FastAPI app also exposes `/api/snapshot/{ticker}`, so the market layer is reusable beyond Telegram.
@@ -99,7 +100,7 @@ For the bot alone, `python -m app.polling` works too.
 Any host that runs Docker works (Render, Railway, Fly.io):
 
 1. Deploy this repo using the included `Dockerfile`.
-2. Set the env vars from `.env.example`, including `WEBHOOK_BASE_URL` (your app's public URL) and a random `WEBHOOK_SECRET` of 32+ characters (`python -c "import secrets; print(secrets.token_urlsafe(32))"`).
+2. Set the env vars from `.env.example`, including `WEBHOOK_BASE_URL` (your app's public URL) a `DASHBOARD_PASSWORD` of 16+ characters, and a random `WEBHOOK_SECRET` of 32+ characters (`python -c "import secrets; print(secrets.token_urlsafe(32))"`).
 3. On startup the app registers its webhook with Telegram automatically. Check `GET /health`.
 
 ## Tests

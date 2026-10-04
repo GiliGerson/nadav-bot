@@ -148,7 +148,7 @@
   <header>
     <div>
       <h1>Watchlist</h1>
-      <p class="sub">Live indicators and a rule-based technical stance for every ticker you track.</p>
+      <p class="sub">Live indicators and a rule-based technical stance for every ticker on the list. Anyone can view it; only the owner can change it.</p>
     </div>
     <div class="meta">
       <span id="updated">Loading…</span>
@@ -202,6 +202,7 @@
 
 <script>
   const STANCE_ORDER = { Buy: 3, Hold: 2, Sell: 1 };
+  const OWNER_ONLY = "Only the owner can change this list. Viewing is open to everyone.";
   let rows = [];
   let sort = { key: "score", dir: -1 };
 
@@ -331,7 +332,9 @@
       method: "DELETE",
       headers: { "X-Nadav-Dashboard": "1" },
     });
-    if (res.ok || res.status === 404) {
+    if (res.status === 401) {
+      $("msg").textContent = OWNER_ONLY;
+    } else if (res.ok || res.status === 404) {
       rows = rows.filter((r) => r.ticker !== ticker);
       render();
     }
@@ -351,6 +354,10 @@
         body: JSON.stringify({ ticker }),
       });
       const data = await res.json();
+      if (res.status === 401) {
+        $("msg").textContent = OWNER_ONLY;
+        return;
+      }
       if (!res.ok) {
         $("msg").textContent = data.detail || "Couldn't add that ticker.";
         return;

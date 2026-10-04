@@ -33,6 +33,7 @@ setup_logging(settings)
 logger = logging.getLogger("nadav")
 
 DASHBOARD = Path(__file__).parent / "static" / "dashboard.html"
+DEMO_WATCHLIST = ["NVDA", "AAPL", "MSFT", "TEVA.TA", "BTC-USD", "GOOGL", "TSLA", "NKE"]
 SECURITY_HEADERS = security_headers(
     # Hash the bytes exactly as served: read_text() would normalise CRLF line endings and
     # produce a hash that blocks the page's own script.
@@ -66,6 +67,11 @@ async def lifespan(app: FastAPI):
     app.state.tg = tg
     app.state.market = tg.bot_data["market"]
     app.state.watchlist = Watchlist(settings.watchlist_db_path)
+    # Hosts without a persistent disk (Render's free plan) start with an empty database,
+    # so seed the public demo list rather than show visitors an empty dashboard.
+    if not app.state.watchlist.tickers():
+        for ticker in DEMO_WATCHLIST:
+            app.state.watchlist.add(ticker)
     yield
     if tg.updater and tg.updater.running:
         await tg.updater.stop()
@@ -83,7 +89,8 @@ if not settings.production:
     # and reads the dashboard through the owner's browser.
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=["localhost", "127.0.0.1"])
 
-# Everything that exposes or changes the owner's data sits behind the dashboard password.
+# The dashboard is a public demo: anyone can view it, but changing the list or using the
+# raw snapshot API (which triggers Yahoo fetches for any ticker) needs the owner's password.
 protected = APIRouter(
     dependencies=[Depends(make_dashboard_auth(settings.dashboard_username, settings.dashboard_password))]
 )
@@ -163,12 +170,12 @@ class WatchlistAdd(BaseModel):
     ticker: str
 
 
-@protected.get("/", include_in_schema=False)
+@app.get("/", include_in_schema=False)
 async def dashboard() -> FileResponse:
     return FileResponse(DASHBOARD)
 
 
-@protected.get("/api/watchlist", dependencies=[Depends(require_csrf_header)])
+@app.get("/api/watchlist", dependencies=[Depends(require_csrf_header)])
 async def get_watchlist(request: Request) -> list[dict]:
     """Every watched ticker with its snapshot, signals, score and stance."""
     tickers = request.app.state.watchlist.tickers()

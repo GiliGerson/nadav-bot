@@ -24,7 +24,7 @@ AI analysis runs as a private demo: only Telegram users listed in `AI_ALLOWED_US
 
 Works with stocks, indices, crypto, FX and non-US exchanges, including Tel Aviv (`.TA`). Analysis language is configurable (English / Hebrew).
 
-**Watchlist dashboard.** The same server hosts a web dashboard (`/`) for tracking tickers. Each one gets live indicators, a set of technical signals (▲ bullish / ▼ bearish), a 1-5 score and a Buy / Hold / Sell stance. The list is stored in SQLite.
+**Watchlist dashboard.** The same server hosts a public, read-only web dashboard (`/`) for tracking tickers; only the owner can change the list. Each one gets live indicators, a set of technical signals (▲ bullish / ▼ bearish), a 1-5 score and a Buy / Hold / Sell stance. The list is stored in SQLite.
 
 <!-- ![Dashboard](docs/dashboard.png) -->
 
@@ -87,7 +87,7 @@ The bot is open to anyone on Telegram and the server has a public URL, so it's b
 |---|---|
 | Strangers running up the Claude bill | Claude is only called for an allowlist of Telegram user IDs (`AI_ALLOWED_USER_IDS`), checked *before* a global daily cap (`DAILY_AI_LIMIT`, an atomic SQLite counter), so outsiders can't even use up the cap. A hard monthly spend limit on the API account is the last line of defense. |
 | Forged Telegram updates "from" an allowlisted user | The webhook's secret header is compared in constant time, the app refuses to start with a placeholder or short secret, and the webhook route only exists in webhook mode. |
-| Someone reading or editing the owner's watchlist | The dashboard and API sit behind HTTP Basic auth, required (16+ chars) on any public deployment. The Docker image marks itself public, so it can't start without a password. API docs are disabled in production. |
+| Someone editing the watchlist or abusing the API | The dashboard is a public, read-only demo list; adding or removing tickers and the raw `/api/snapshot` endpoint need HTTP Basic auth, required (16+ chars) on any public deployment. The Docker image marks itself public, so it can't start without a password. API docs are disabled in production. |
 | Malicious websites acting through the owner's browser | Every API call needs a custom header that cross-site requests can't send (the CORS preflight is never granted), which blocks CSRF. Locally, only `localhost` Host headers are answered, which blocks DNS rebinding. |
 | XSS and injection | Telegram output is HTML-escaped (truncated *before* escaping, so entities are never split), the dashboard renders with `textContent` only, and a Content-Security-Policy allows just the page's own script by SHA-256 hash. SQL is parameterized and tickers are validated against a strict regex. |
 | Flooding the bot or the server | A per-user rate limit on every command (`USER_REQUESTS_PER_MINUTE`), capped parallel Yahoo fetches, cached "not found" results, a 4 KB body limit on API writes (FastAPI parses bodies before auth runs) and bounded in-memory caches. Group chats are ignored. |

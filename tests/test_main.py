@@ -61,8 +61,18 @@ def test_public_polling_does_not_need_webhook_secret(load_app):
 
 def test_spoofed_localhost_host_header_does_not_bypass_auth_when_public(load_app):
     client = TestClient(load_app(PUBLIC_DEPLOYMENT="true", DASHBOARD_PASSWORD=PASSWORD))
-    for path in ["/", "/api/watchlist", "/api/snapshot/AAPL"]:
-        assert client.get(path, headers={"Host": "localhost"}).status_code == 401
+    headers = {"Host": "localhost", "X-Nadav-Dashboard": "1"}
+    assert client.get("/api/snapshot/AAPL", headers=headers).status_code == 401
+    assert client.post("/api/watchlist", json={"ticker": "AAPL"}, headers=headers).status_code == 401
+    assert client.delete("/api/watchlist/AAPL", headers=headers).status_code == 401
+
+
+def test_dashboard_page_is_public_but_edits_need_the_password(load_app):
+    client = TestClient(load_app(PUBLIC_DEPLOYMENT="true", DASHBOARD_PASSWORD=PASSWORD))
+    assert client.get("/").status_code == 200
+    headers = {"X-Nadav-Dashboard": "1"}
+    assert client.post("/api/watchlist", json={"ticker": "AAPL"}, headers=headers).status_code == 401
+    assert client.delete("/api/watchlist/AAPL", headers=headers).status_code == 401
 
 
 def test_local_mode_rejects_other_hosts(load_app):

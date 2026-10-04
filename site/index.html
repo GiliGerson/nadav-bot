@@ -107,7 +107,7 @@ A strong, well-supported uptrend trading right at its yearly high, with momentum
       </div>
       <div class="card">
         <h3>Watchlist dashboard</h3>
-        <p>A password-protected web view of every tracked ticker, with signals, a 1–5 score and a stance.</p>
+        <p>A live web view of every tracked ticker, with signals, a 1–5 score and a stance. Open to view; only the owner can edit.</p>
       </div>
     </div>
   </div>
@@ -146,7 +146,7 @@ A strong, well-supported uptrend trading right at its yearly high, with momentum
         </table>
       </div>
     </div>
-    <p class="caption">Demo built from real market data as of October 2, 2026. The live dashboard is password-protected, since a watchlist reveals what its owner tracks.</p>
+    <p class="caption">Demo built from real market data as of October 2, 2026. The <a href="https://nadav-bot-0prm.onrender.com">live dashboard</a> runs on the bot's server with current prices (on the free plan it can take a minute to wake up).</p>
   </div>
 </section>
 
@@ -203,7 +203,7 @@ A strong, well-supported uptrend trading right at its yearly high, with momentum
     <div class="threats">
       <div class="threat"><h3><span class="ico">✓</span>Strangers running up the AI bill</h3><p>Claude is called only for an allowlist of users, checked before a global daily cap, plus a hard monthly spend limit.</p></div>
       <div class="threat"><h3><span class="ico">✓</span>Forged Telegram updates</h3><p>Webhook secret compared in constant time; the app refuses to start with a placeholder or short secret.</p></div>
-      <div class="threat"><h3><span class="ico">✓</span>Reading or editing the watchlist</h3><p>Dashboard and API behind auth, required on any public deployment; API docs off in production.</p></div>
+      <div class="threat"><h3><span class="ico">✓</span>Editing the watchlist or abusing the API</h3><p>The dashboard is read-only for visitors; edits and the raw API need the owner's password. API docs off in production.</p></div>
       <div class="threat"><h3><span class="ico">✓</span>Malicious sites using the owner's browser</h3><p>A custom request header blocks CSRF; a localhost-only Host check blocks DNS rebinding.</p></div>
       <div class="threat"><h3><span class="ico">✓</span>XSS and injection</h3><p>Escaped output, <code>textContent</code>-only rendering, a hash-based CSP, parameterized SQL, strict ticker validation.</p></div>
       <div class="threat"><h3><span class="ico">✓</span>Flooding the bot or server</h3><p>Per-user rate limits, concurrent update handling, capped Yahoo fetches, request size limits, bounded caches.</p></div>

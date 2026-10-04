@@ -2,6 +2,8 @@ FROM python:3.12-slim
 
 WORKDIR /app
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+# A container is reachable from outside, so require production secrets whatever the run mode.
+ENV PUBLIC_DEPLOYMENT=1
 
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt

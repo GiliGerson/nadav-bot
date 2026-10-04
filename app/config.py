@@ -38,11 +38,22 @@ class Settings(BaseSettings):
     # listens on localhost); required once deployed, see _require_production_secrets.
     dashboard_username: str = "nadav"
     dashboard_password: str = ""
+    # Set when the server is reachable from the internet without a webhook (e.g. polling
+    # inside a container bound to 0.0.0.0). The Dockerfile sets it, so images are safe by default.
+    public_deployment: bool = False
+
+    @property
+    def webhook_mode(self) -> bool:
+        return bool(self.webhook_base_url)
 
     @property
     def production(self) -> bool:
-        """Webhook mode means a public URL, so every secret has to be real."""
-        return bool(self.webhook_base_url)
+        """Reachable from the internet, so the dashboard must have a real password.
+
+        Not inferred from the webhook alone: a container running in polling mode is just
+        as public, and the localhost Host check can't tell (the Host header is client-set).
+        """
+        return self.webhook_mode or self.public_deployment
 
     @field_validator("ai_allowed_user_ids", mode="before")
     @classmethod
@@ -59,7 +70,7 @@ class Settings(BaseSettings):
         generate = 'Generate one with: python -c "import secrets; print(secrets.token_urlsafe(32))"'
         # The secret header is the only proof a webhook request came from Telegram. With a
         # guessable one, anyone could post forged updates "from" an allowlisted user ID.
-        if (
+        if self.webhook_mode and (
             self.webhook_secret in KNOWN_PLACEHOLDER_SECRETS
             or len(self.webhook_secret) < MIN_WEBHOOK_SECRET_LENGTH
         ):
@@ -71,7 +82,7 @@ class Settings(BaseSettings):
         if len(self.dashboard_password) < MIN_DASHBOARD_PASSWORD_LENGTH:
             raise ValueError(
                 f"DASHBOARD_PASSWORD must be at least {MIN_DASHBOARD_PASSWORD_LENGTH} characters "
-                f"when WEBHOOK_BASE_URL is set. {generate}"
+                f"when WEBHOOK_BASE_URL or PUBLIC_DEPLOYMENT is set. {generate}"
             )
         return self
 

@@ -36,3 +36,10 @@ def test_webhook_mode_requires_a_dashboard_password(password):
 @pytest.mark.parametrize("url", [None, ""])
 def test_polling_mode_does_not_need_a_secret(url):
     assert make(webhook_base_url=url).webhook_secret == "change-me"
+
+
+def test_public_deployment_requires_password_but_not_webhook_secret():
+    with pytest.raises(ValueError, match="DASHBOARD_PASSWORD"):
+        make(public_deployment=True)
+    settings = make(public_deployment=True, dashboard_password=STRONG)
+    assert settings.production and not settings.webhook_mode

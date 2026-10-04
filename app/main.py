@@ -40,7 +40,7 @@ SECURITY_HEADERS = security_headers(
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    webhook_mode = settings.production
+    webhook_mode = settings.webhook_mode
     tg = build_application(settings, webhook_mode=webhook_mode)
     await tg.initialize()
     await tg.start()
@@ -93,7 +93,6 @@ async def add_security_headers(request: Request, call_next):
     return response
 
 
-@app.post("/telegram/webhook", include_in_schema=False)
 async def telegram_webhook(
     request: Request,
     x_telegram_bot_api_secret_token: str | None = Header(default=None),
@@ -107,6 +106,11 @@ async def telegram_webhook(
     tg = request.app.state.tg
     await tg.update_queue.put(Update.de_json(await request.json(), tg.bot))
     return {"ok": True}
+
+
+# Only mounted when it's actually used: in polling mode there's no route to forge updates into.
+if settings.webhook_mode:
+    app.add_api_route("/telegram/webhook", telegram_webhook, methods=["POST"], include_in_schema=False)
 
 
 @app.get("/health")

@@ -34,6 +34,9 @@ DISCLAIMER = "Not financial advice. Data from Yahoo Finance, may be delayed."
 AI_LIMIT_MESSAGE = (
     "Daily AI analysis limit reached. Try again tomorrow, or use /price for instant indicators."
 )
+AI_RESTRICTED_MESSAGE = "AI analysis is limited to a private demo. Try /price or /market."
+# /market itself is open to everyone, so it can't point users back to /market.
+AI_RESTRICTED_MARKET_NOTE = "AI commentary is limited to a private demo."
 MARKET_TICKERS = ["^GSPC", "^IXIC", "^DJI", "^VIX", "^TA125.TA"]
 
 COMMANDS = [
@@ -41,6 +44,7 @@ COMMANDS = [
     BotCommand("price", "Quick snapshot without AI, e.g. /price TEVA.TA"),
     BotCommand("compare", "Compare 2-4 tickers, e.g. /compare AAPL MSFT"),
     BotCommand("market", "Market pulse across major indices"),
+    BotCommand("myid", "Show your Telegram user ID"),
     BotCommand("help", "How to use Nadav"),
 ]
 
@@ -146,8 +150,18 @@ async def _reply_with_analysis(
     header: str,
     thinking: str,
     make_analysis: Callable[[], Awaitable[str]],
+    restricted_note: str = AI_RESTRICTED_MESSAGE,
 ) -> None:
-    """Reply with the indicator header, then fill in Claude's analysis if today's cap allows."""
+    """Reply with the indicator header, then fill in Claude's analysis if the user may have it.
+
+    Gates, in order: the user allowlist, then the global daily cap. The allowlist comes
+    first so users without access never use up the shared daily budget.
+    """
+    settings: Settings = context.bot_data["settings"]
+    user = update.effective_user
+    if user is None or user.id not in settings.ai_allowed_user_ids:
+        await update.effective_message.reply_html(f"{header}\n\n🔒 <i>{restricted_note}</i>")
+        return
     usage: DailyAIUsage = context.bot_data["ai_usage"]
     if not usage.try_acquire():
         logger.info("Daily AI limit (%d) reached; sending indicators only", usage.limit)
@@ -173,6 +187,13 @@ async def _finish_with_llm(placeholder: Message, header: str, coro: Awaitable[st
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.effective_message.reply_html(WELCOME)
+
+
+async def myid(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Reply with the sender's Telegram ID, the value AI_ALLOWED_USER_IDS expects."""
+    await update.effective_message.reply_html(
+        f"Your Telegram user ID: <code>{update.effective_user.id}</code>"
+    )
 
 
 async def price(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -245,7 +266,12 @@ async def market_pulse(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 
     header = "🌍 <b>Market pulse</b>\n" + "\n".join(compact_line(s) for s in snapshots)
     await _reply_with_analysis(
-        update, context, header, "Reading the room…", lambda: analyst.market_pulse(snapshots)
+        update,
+        context,
+        header,
+        "Reading the room…",
+        lambda: analyst.market_pulse(snapshots),
+        restricted_note=AI_RESTRICTED_MARKET_NOTE,
     )
 
 
@@ -276,6 +302,7 @@ COMMAND_HANDLERS = {
     "analyze": analyze,
     "compare": compare,
     "market": market_pulse,
+    "myid": myid,
 }
 
 

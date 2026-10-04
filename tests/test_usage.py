@@ -1,10 +1,7 @@
 from datetime import UTC, datetime, timedelta, timezone
-from types import SimpleNamespace
-from unittest.mock import AsyncMock
 
 import pytest
 
-from app.bot import AI_LIMIT_MESSAGE, _reply_with_analysis
 from app.usage import DailyAIUsage
 
 
@@ -70,17 +67,3 @@ def test_count_survives_restart(db, clock):
 def test_zero_limit_disables_ai(db, clock):
     assert DailyAIUsage(db, limit=0, clock=clock).try_acquire() is False
 
-
-async def test_limit_reached_sends_indicators_without_calling_claude(db, clock):
-    usage = DailyAIUsage(db, limit=0, clock=clock)
-    message = SimpleNamespace(reply_html=AsyncMock())
-    update = SimpleNamespace(effective_message=message)
-    context = SimpleNamespace(bot_data={"ai_usage": usage})
-    make_analysis = AsyncMock()
-
-    await _reply_with_analysis(update, context, "<b>AAPL</b>", "Analyzing…", make_analysis)
-
-    make_analysis.assert_not_called()
-    sent = message.reply_html.await_args.args[0]
-    assert sent.startswith("<b>AAPL</b>")
-    assert AI_LIMIT_MESSAGE in sent

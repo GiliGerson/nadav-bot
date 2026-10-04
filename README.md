@@ -15,7 +15,10 @@
 | `/price TEVA.TA` | Instant indicator card (no LLM call, so it's fast and free) |
 | `/compare AAPL MSFT GOOGL` | Side-by-side comparison of 2-4 tickers |
 | `/market` | Pulse of S&P 500, Nasdaq, Dow, VIX and TA-125 |
+| `/myid` | Your Telegram user ID (for `AI_ALLOWED_USER_IDS`) |
 | just type `btc-usd` | Shortcut for `/analyze` |
+
+AI analysis runs as a private demo: only Telegram users listed in `AI_ALLOWED_USER_IDS` get Claude's write-up. Everyone else still gets the indicator cards, and `/price` and `/market` stay open to all.
 
 Works with stocks, indices, crypto, FX and non-US exchanges, including Tel Aviv (`.TA`). Analysis language is configurable (English / Hebrew).
 
@@ -64,6 +67,7 @@ Indicators are computed in pure, unit-tested Python functions. The LLM does what
 
 **Built for real users, not just a demo.**
 - Per-user cooldown so one user can't burn the API budget
+- Allowlist of Telegram user IDs for Claude calls (`AI_ALLOWED_USER_IDS`), checked before the daily cap so other users never spend the shared budget
 - Global daily cap on Claude calls (`DAILY_AI_LIMIT`, resets at midnight UTC, persisted in SQLite); past it, users still get the indicator card
 - TTL cache so repeated requests for popular tickers don't hit Yahoo again
 - Blocking yfinance calls run in a thread pool so the event loop stays responsive
@@ -87,6 +91,7 @@ uvicorn app.main:app   # bot (long polling) + dashboard on http://localhost:8000
 ```
 
 Open http://localhost:8000 for the dashboard, then open your bot in Telegram and send `/start`.
+To unlock AI analysis for yourself, send `/myid` to the bot, put the number in `AI_ALLOWED_USER_IDS` in `.env`, and restart.
 For the bot alone, `python -m app.polling` works too.
 
 ## Deploy (webhook mode)

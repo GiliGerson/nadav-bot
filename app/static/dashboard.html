@@ -1,0 +1,377 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nadav Watchlist</title>
+<style>
+  :root {
+    --page: #f9f9f7;
+    --surface: #fcfcfb;
+    --ink: #0b0b0b;
+    --ink-2: #52514e;
+    --muted: #898781;
+    --grid: #e1e0d9;
+    --border: rgba(11, 11, 11, 0.10);
+    --accent: #0b0b0b;
+    --accent-ink: #fcfcfb;
+    --up: #006300;
+    --down: #b42e2e;
+    --good: #0ca30c;
+    --warning: #fab219;
+    --critical: #d03b3b;
+    --good-wash: rgba(12, 163, 12, 0.10);
+    --warning-wash: rgba(250, 178, 25, 0.16);
+    --critical-wash: rgba(208, 59, 59, 0.10);
+    --row-hover: rgba(11, 11, 11, 0.03);
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --page: #0d0d0d; --surface: #1a1a19; --ink: #ffffff; --ink-2: #c3c2b7; --muted: #898781;
+      --grid: #2c2c2a; --border: rgba(255, 255, 255, 0.10); --accent: #ffffff; --accent-ink: #0d0d0d;
+      --up: #0ca30c; --down: #e86464;
+      --good-wash: rgba(12, 163, 12, 0.16); --warning-wash: rgba(250, 178, 25, 0.14);
+      --critical-wash: rgba(208, 59, 59, 0.18); --row-hover: rgba(255, 255, 255, 0.03);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --page: #0d0d0d; --surface: #1a1a19; --ink: #ffffff; --ink-2: #c3c2b7; --muted: #898781;
+    --grid: #2c2c2a; --border: rgba(255, 255, 255, 0.10); --accent: #ffffff; --accent-ink: #0d0d0d;
+    --up: #0ca30c; --down: #e86464;
+    --good-wash: rgba(12, 163, 12, 0.16); --warning-wash: rgba(250, 178, 25, 0.14);
+    --critical-wash: rgba(208, 59, 59, 0.18); --row-hover: rgba(255, 255, 255, 0.03);
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--page); color: var(--ink);
+    font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  main { max-width: 1180px; margin: 0 auto; padding: 32px 16px 48px; }
+
+  header { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px; }
+  h1 { font-size: 24px; line-height: 1.2; margin: 0; letter-spacing: -0.01em; }
+  .sub { color: var(--ink-2); margin: 4px 0 0; }
+  .meta { display: flex; align-items: center; gap: 12px; color: var(--muted); font-size: 13px; }
+
+  button, input { font: inherit; }
+  .btn {
+    border: 1px solid var(--border); background: var(--surface); color: var(--ink);
+    border-radius: 8px; padding: 8px 14px; cursor: pointer;
+  }
+  .btn:hover { background: var(--row-hover); }
+  .btn-primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
+  .btn-primary:hover { opacity: 0.88; background: var(--accent); }
+  .btn:disabled { opacity: 0.5; cursor: progress; }
+
+  .tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 24px 0; }
+  .tile { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; }
+  .tile .label { display: flex; align-items: center; gap: 6px; color: var(--ink-2); font-size: 13px; }
+  .swatch { width: 8px; height: 8px; border-radius: 50%; }
+  .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .tile .value { font-size: 28px; font-weight: 650; margin-top: 2px; }
+
+  .add { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px; }
+  .add input {
+    flex: 0 1 240px; min-width: 0; padding: 8px 12px; border-radius: 8px;
+    border: 1px solid var(--border); background: var(--surface); color: var(--ink); text-transform: uppercase;
+  }
+  .add input::placeholder { text-transform: none; color: var(--muted); }
+  .msg { font-size: 13px; color: var(--down); min-height: 1em; }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+  .scroll { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; min-width: 980px; }
+  th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--grid); vertical-align: middle; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: var(--row-hover); }
+  th {
+    font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em;
+    white-space: nowrap; user-select: none;
+  }
+  th[data-sort] { cursor: pointer; }
+  th[data-sort]:hover { color: var(--ink); }
+  th .arrow { display: inline-block; width: 1em; }
+  .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .name { font-weight: 600; }
+  .ticker { color: var(--muted); font-size: 12px; }
+  .up { color: var(--up); }
+  .down { color: var(--down); }
+  .muted { color: var(--muted); }
+
+  .stance {
+    display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px 3px 8px;
+    border-radius: 999px; font-weight: 600; font-size: 13px; white-space: nowrap;
+  }
+  .stance .dot { width: 8px; height: 8px; border-radius: 50%; }
+  .stance-Buy { background: var(--good-wash); }
+  .stance-Buy .dot { background: var(--good); }
+  .stance-Hold { background: var(--warning-wash); }
+  .stance-Hold .dot { background: var(--warning); }
+  .stance-Sell { background: var(--critical-wash); }
+  .stance-Sell .dot { background: var(--critical); }
+
+  .meter { display: inline-flex; gap: 2px; vertical-align: middle; margin-right: 6px; }
+  .meter i { width: 6px; height: 14px; border-radius: 2px; background: var(--grid); }
+  .meter i.on { background: var(--ink-2); }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 4px; }
+  .chip {
+    font-size: 12px; padding: 2px 8px; border-radius: 6px; border: 1px solid var(--border);
+    color: var(--ink-2); white-space: nowrap;
+  }
+  .chip b { font-weight: 600; margin-right: 3px; }
+
+  .remove {
+    border: none; background: none; color: var(--muted); cursor: pointer; font-size: 18px; line-height: 1;
+    padding: 4px 8px; border-radius: 6px;
+  }
+  .remove:hover { color: var(--down); background: var(--critical-wash); }
+
+  .empty { padding: 48px 16px; text-align: center; color: var(--ink-2); }
+  .empty strong { display: block; color: var(--ink); font-size: 16px; margin-bottom: 4px; }
+
+  footer { margin-top: 20px; color: var(--muted); font-size: 12px; max-width: 760px; }
+
+  @media (max-width: 640px) {
+    main { padding-top: 20px; }
+    .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .add input { flex: 1 1 160px; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div>
+      <h1>Watchlist</h1>
+      <p class="sub">Live indicators and a rule-based technical stance for every ticker you track.</p>
+    </div>
+    <div class="meta">
+      <span id="updated">Loading…</span>
+      <button class="btn" id="refresh" type="button">Refresh</button>
+    </div>
+  </header>
+
+  <section class="tiles" aria-label="Summary">
+    <div class="tile"><div class="label">Tracking</div><div class="value" id="t-total">–</div></div>
+    <div class="tile"><div class="label"><span class="swatch" style="background: var(--good)"></span>Buy</div><div class="value" id="t-Buy">–</div></div>
+    <div class="tile"><div class="label"><span class="swatch" style="background: var(--warning)"></span>Hold</div><div class="value" id="t-Hold">–</div></div>
+    <div class="tile"><div class="label"><span class="swatch" style="background: var(--critical)"></span>Sell</div><div class="value" id="t-Sell">–</div></div>
+  </section>
+
+  <form class="add" id="add-form" autocomplete="off">
+    <input id="ticker" name="ticker" placeholder="Add a ticker, e.g. NVDA or TEVA.TA" aria-label="Ticker" required maxlength="16">
+    <button class="btn btn-primary" id="add-btn" type="submit">Add</button>
+    <span class="msg" id="msg" role="status"></span>
+  </form>
+
+  <div class="card">
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr>
+            <th data-sort="name">Instrument<span class="arrow"></span></th>
+            <th class="num" data-sort="price">Price<span class="arrow"></span></th>
+            <th class="num" data-sort="change_1d_pct">1D<span class="arrow"></span></th>
+            <th class="num" data-sort="change_1m_pct">1M<span class="arrow"></span></th>
+            <th class="num" data-sort="change_3m_pct">3M<span class="arrow"></span></th>
+            <th class="num" data-sort="rsi_14">RSI<span class="arrow"></span></th>
+            <th class="num" data-sort="from_52w_high_pct">vs 52W high<span class="arrow"></span></th>
+            <th data-sort="score">Score<span class="arrow"></span></th>
+            <th data-sort="stance">Stance<span class="arrow"></span></th>
+            <th>Signals</th>
+            <th><span class="visually-hidden">Remove</span></th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <footer>
+    Stance is computed by fixed technical rules (trend vs. moving averages, RSI, 3-month momentum,
+    distance from the 52-week high, volume). Bullish signals count +1 and bearish −1; every 2 net points
+    move the score one step from a neutral 3. Score 4–5 is Buy, 3 is Hold, 1–2 is Sell.
+    It is a mechanical read of the chart, not financial advice. Data from Yahoo Finance, may be delayed.
+  </footer>
+</main>
+
+<script>
+  const STANCE_ORDER = { Buy: 3, Hold: 2, Sell: 1 };
+  let rows = [];
+  let sort = { key: "score", dir: -1 };
+
+  const $ = (id) => document.getElementById(id);
+  const el = (tag, cls, text) => {
+    const node = document.createElement(tag);
+    if (cls) node.className = cls;
+    if (text !== undefined) node.textContent = text;
+    return node;
+  };
+  const num = (v, d = 2) => v == null ? "n/a" : v.toLocaleString(undefined, { minimumFractionDigits: d, maximumFractionDigits: d });
+  const pct = (v) => v == null ? "n/a" : `${v >= 0 ? "+" : ""}${v.toFixed(2)}%`;
+  const tone = (v) => v == null ? "muted" : v >= 0 ? "up" : "down";
+
+  const pctCell = (v) => el("td", `num ${tone(v)}`, pct(v));
+
+  function render() {
+    const body = $("rows");
+    body.replaceChildren();
+
+    const ok = rows.filter((r) => !r.error);
+    $("t-total").textContent = rows.length;
+    for (const s of ["Buy", "Hold", "Sell"]) $(`t-${s}`).textContent = ok.filter((r) => r.stance === s).length;
+
+    if (!rows.length) {
+      const td = el("td", "empty");
+      td.colSpan = 11;
+      td.append(el("strong", "", "Your watchlist is empty"), "Add a ticker above to start tracking it.");
+      const tr = el("tr");
+      tr.append(td);
+      body.append(tr);
+      return;
+    }
+
+    const sorted = [...rows].sort((a, b) => {
+      const va = sort.key === "stance" ? STANCE_ORDER[a.stance] : a[sort.key];
+      const vb = sort.key === "stance" ? STANCE_ORDER[b.stance] : b[sort.key];
+      if (va == null) return 1;
+      if (vb == null) return -1;
+      return (typeof va === "string" ? va.localeCompare(vb) : va - vb) * sort.dir;
+    });
+
+    for (const r of sorted) {
+      const tr = el("tr");
+      const name = el("td");
+      name.append(el("div", "name", r.name || r.ticker), el("div", "ticker", r.ticker));
+      tr.append(name);
+
+      if (r.error) {
+        const td = el("td", "muted", r.error);
+        td.colSpan = 9;
+        tr.append(td);
+      } else {
+        const price = el("td", "num", num(r.price));
+        price.append(el("span", "muted", ` ${r.currency || ""}`));
+        tr.append(
+          price,
+          pctCell(r.change_1d_pct),
+          pctCell(r.change_1m_pct),
+          pctCell(r.change_3m_pct),
+          el("td", "num", num(r.rsi_14, 1)),
+          pctCell(r.from_52w_high_pct),
+        );
+
+        const score = el("td");
+        score.style.whiteSpace = "nowrap";
+        const meter = el("span", "meter");
+        meter.setAttribute("aria-hidden", "true");
+        for (let i = 1; i <= 5; i++) meter.append(el("i", i <= r.score ? "on" : ""));
+        score.append(meter, `${r.score}/5`);
+        tr.append(score);
+
+        const stance = el("td");
+        const badge = el("span", `stance stance-${r.stance}`);
+        badge.append(el("span", "dot"), r.stance);
+        stance.append(badge);
+        tr.append(stance);
+
+        const sigs = el("td");
+        const chips = el("div", "chips");
+        if (!r.signals.length) chips.append(el("span", "muted", "No strong signals"));
+        for (const s of r.signals) {
+          const chip = el("span", "chip");
+          const mark = el("b", s.bias > 0 ? "up" : "down", s.bias > 0 ? "▲" : "▼");
+          chip.title = s.bias > 0 ? "Bullish signal (+1)" : "Bearish signal (−1)";
+          chip.append(mark, s.label);
+          chips.append(chip);
+        }
+        sigs.append(chips);
+        tr.append(sigs);
+      }
+
+      const rm = el("td");
+      const btn = el("button", "remove", "×");
+      btn.type = "button";
+      btn.title = `Remove ${r.ticker}`;
+      btn.setAttribute("aria-label", `Remove ${r.ticker}`);
+      btn.onclick = () => removeTicker(r.ticker);
+      rm.append(btn);
+      tr.append(rm);
+      body.append(tr);
+    }
+
+    document.querySelectorAll("th[data-sort]").forEach((th) => {
+      th.querySelector(".arrow").textContent = th.dataset.sort === sort.key ? (sort.dir > 0 ? " ↑" : " ↓") : "";
+    });
+  }
+
+  async function load() {
+    $("refresh").disabled = true;
+    $("updated").textContent = "Updating…";
+    try {
+      const res = await fetch("/api/watchlist");
+      if (!res.ok) throw new Error(res.statusText);
+      rows = await res.json();
+      render();
+      $("updated").textContent = `Updated ${new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
+    } catch {
+      $("updated").textContent = "Couldn't load data";
+    } finally {
+      $("refresh").disabled = false;
+    }
+  }
+
+  async function removeTicker(ticker) {
+    const res = await fetch(`/api/watchlist/${encodeURIComponent(ticker)}`, { method: "DELETE" });
+    if (res.ok || res.status === 404) {
+      rows = rows.filter((r) => r.ticker !== ticker);
+      render();
+    }
+  }
+
+  $("add-form").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const input = $("ticker");
+    const ticker = input.value.trim();
+    if (!ticker) return;
+    $("add-btn").disabled = true;
+    $("msg").textContent = "";
+    try {
+      const res = await fetch("/api/watchlist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ticker }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        $("msg").textContent = data.detail || "Couldn't add that ticker.";
+        return;
+      }
+      rows = rows.filter((r) => r.ticker !== data.ticker).concat(data);
+      input.value = "";
+      render();
+    } catch {
+      $("msg").textContent = "Network error, try again.";
+    } finally {
+      $("add-btn").disabled = false;
+    }
+  });
+
+  document.querySelectorAll("th[data-sort]").forEach((th) => {
+    th.addEventListener("click", () => {
+      const key = th.dataset.sort;
+      sort = sort.key === key ? { key, dir: -sort.dir } : { key, dir: key === "name" ? 1 : -1 };
+      render();
+    });
+  });
+
+  $("refresh").addEventListener("click", load);
+  load();
+</script>
+</body>
+</html>

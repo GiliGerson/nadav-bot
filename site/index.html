@@ -1,13 +1,12 @@
 <!doctype html>
-<html lang="he" dir="rtl">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>נדב · אנליסט שוק מבוסס AI בטלגרם</title>
-<meta name="description" content="בוט טלגרם שהופך נתוני שוק בזמן אמת לניתוח של Claude שמבוסס על נתונים מחושבים, עם דשבורד מעקב ואותות טכניים לפי חוקים.">
-<meta property="og:title" content="נדב · אנליסט שוק מבוסס AI בטלגרם">
-<meta property="og:description" content="מדדים בזמן אמת, ניתוח של Claude שמבוסס על נתונים מחושבים, ודשבורד מעקב עם אותות לפי חוקים.">
-<meta property="og:locale" content="he_IL">
+<title>Nadav · AI market analyst in Telegram</title>
+<meta name="description" content="A Telegram bot that turns live market data into grounded, Claude-written analysis, with a watchlist dashboard and rule-based technical signals.">
+<meta property="og:title" content="Nadav · AI market analyst in Telegram">
+<meta property="og:description" content="Live indicators, Claude-written analysis grounded in computed data, and a watchlist dashboard with rule-based signals.">
 <meta name="theme-color" content="#0b0b0b">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230b0b0b'/%3E%3Cpath d='M7 21l6-6 4 4 8-9' stroke='%23fff' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="styles.css">
@@ -17,12 +16,12 @@
 
 <nav>
   <div class="wrap">
-    <a class="logo" href="#top"><span class="logo-mark" aria-hidden="true">📈</span>נדב</a>
+    <a class="logo" href="#top"><span class="logo-mark" aria-hidden="true">📈</span>Nadav</a>
     <div class="nav-links">
-      <a href="#features">יכולות</a>
-      <a href="#dashboard">דשבורד</a>
-      <a href="#how">איך זה עובד</a>
-      <a href="#security">אבטחה</a>
+      <a href="#features">Features</a>
+      <a href="#dashboard">Dashboard</a>
+      <a href="#how">How it works</a>
+      <a href="#security">Security</a>
     </div>
     <a class="btn btn-small" href="https://github.com/GiliGerson/nadav-bot">GitHub</a>
   </div>
@@ -31,23 +30,23 @@
 <header class="hero" id="top">
   <div class="wrap">
     <div>
-      <p class="eyebrow">בוט טלגרם · Claude API · FastAPI</p>
-      <h1>אנליסט שוק מבוסס AI, ישירות ב<span>טלגרם</span>.</h1>
-      <p>שולחים סימול של מניה ומקבלים מדדים בזמן אמת וניתוח תמציתי שכותב Claude, על בסיס מספרים שהבוט חישב בעצמו בלבד. דשבורד מעקב מציג לכל מניה המלצת קנייה, החזקה או מכירה לפי חוקים קבועים.</p>
+      <p class="eyebrow">Telegram bot · Claude API · FastAPI</p>
+      <h1>An AI market analyst that lives in <span>Telegram</span>.</h1>
+      <p>Send a ticker, get live indicators and a concise analysis written by Claude, grounded only in numbers the bot computed itself. A web dashboard tracks a watchlist with rule-based Buy / Hold / Sell signals.</p>
       <div class="cta">
-        <a class="btn btn-primary" href="https://t.me/NadavFinancialBot">פתיחה בטלגרם</a>
-        <a class="btn" href="https://github.com/GiliGerson/nadav-bot">לקוד ב-GitHub</a>
+        <a class="btn btn-primary" href="https://t.me/NadavFinancialBot">Open in Telegram</a>
+        <a class="btn" href="https://github.com/GiliGerson/nadav-bot">View the code</a>
       </div>
-      <p class="note">נסו <code>/price NVDA</code> או <code>/market</code>. ניתוחי ה-AI זמינים כהדגמה פרטית.</p>
+      <p class="note">Try <code>/price NVDA</code> or <code>/market</code>. AI write-ups run as a private demo.</p>
       <div class="stats">
-        <div class="stat"><b>5</b><span>פקודות</span></div>
-        <div class="stat"><b>107</b><span>בדיקות אוטומטיות</span></div>
-        <div class="stat"><b>8</b><span>סוגי איומים מכוסים</span></div>
-        <div class="stat"><b>גלובלי</b><span>מניות, קריפטו, מט״ח ות״א</span></div>
+        <div class="stat"><b>5</b><span>commands</span></div>
+        <div class="stat"><b>107</b><span>automated tests</span></div>
+        <div class="stat"><b>8</b><span>threat classes defended</span></div>
+        <div class="stat"><b>Global</b><span>stocks, crypto, FX, TASE</span></div>
       </div>
     </div>
 
-    <div class="phone" dir="ltr" lang="en" aria-label="דוגמה לשיחה עם הבוט">
+    <div class="phone" aria-label="Example conversation with the bot">
       <div class="phone-bar">
         <div class="avatar" aria-hidden="true">N</div>
         <div><b>Nadav</b><small>bot</small></div>
@@ -82,33 +81,33 @@ A strong, well-supported uptrend trading right at its yearly high, with momentum
 
 <section id="features">
   <div class="wrap">
-    <p class="eyebrow">יכולות</p>
-    <h2>כל מה שצריך לבדיקת שוק מהירה</h2>
-    <p class="lede">עובד עם מניות בארה״ב ובבורסת תל אביב, מדדים, קריפטו ומט״ח. מחירים שמצוטטים באגורות מומרים, כך שמניות בתל אביב מוצגות בשקלים.</p>
+    <p class="eyebrow">Features</p>
+    <h2>Everything a quick market check needs</h2>
+    <p class="lede">Works with US and Tel Aviv stocks, indices, crypto and FX. Minor-unit quotes are converted, so TASE prices read in shekels, not agorot.</p>
     <div class="grid">
       <div class="card">
         <h3><span class="cmd">/analyze NVDA</span> <span class="pill">AI</span></h3>
-        <p>כרטיס מדדים וניתוח של Claude על מגמה, מומנטום וסיכון, שמצטט רק את המספרים שחושבו.</p>
+        <p>Indicator card plus a Claude-written read on trend, momentum and risk, citing only the computed numbers.</p>
       </div>
       <div class="card">
         <h3><span class="cmd">/price TEVA.TA</span></h3>
-        <p>כרטיס מדדים מיידי: מחיר, שינוי בחודש ובשלושה חודשים, טווח שנתי, RSI, תנודתיות וממוצעים נעים.</p>
+        <p>Instant indicator card: price, 1M / 3M moves, 52-week range, RSI(14), volatility and moving averages.</p>
       </div>
       <div class="card">
         <h3><span class="cmd">/compare AAPL MSFT</span> <span class="pill">AI</span></h3>
-        <p>השוואה בין 2–4 מניות, עם שורת סיכום: למי התמונה הטכנית החזקה יותר, ולמה.</p>
+        <p>Side-by-side on 2–4 tickers, ending with which shows the stronger technical setup and why.</p>
       </div>
       <div class="card">
         <h3><span class="cmd">/market</span></h3>
-        <p>תמונת מצב של S&amp;P 500, נאסד״ק, דאו ג׳ונס, VIX ות״א 125, עם פרשנות AI למשתמשי ההדגמה.</p>
+        <p>Pulse of the S&amp;P 500, Nasdaq, Dow, VIX and TA-125, with AI commentary for demo users.</p>
       </div>
       <div class="card">
         <h3><span class="cmd">btc-usd</span></h3>
-        <p>מספיק להקליד סימול: זה קיצור דרך ל-<code>/analyze</code>, ועובד גם במקלדת עברית.</p>
+        <p>Just type a ticker: it's a shortcut for <code>/analyze</code>, and works with Hebrew keyboards too.</p>
       </div>
       <div class="card">
-        <h3>דשבורד מעקב</h3>
-        <p>תצוגת ווב מוגנת בסיסמה של כל המניות במעקב, עם אותות, ציון 1–5 והמלצה.</p>
+        <h3>Watchlist dashboard</h3>
+        <p>A password-protected web view of every tracked ticker, with signals, a 1–5 score and a stance.</p>
       </div>
     </div>
   </div>
@@ -116,15 +115,15 @@ A strong, well-supported uptrend trading right at its yearly high, with momentum
 
 <section id="dashboard">
   <div class="wrap">
-    <p class="eyebrow">דשבורד</p>
-    <h2>רשימת מעקב עם אותות לפי חוקים</h2>
-    <p class="lede">כל מניה מקבלת אותות טכניים שמחושבים בקוד, ציון 1–5 והמלצה: קנייה, החזקה או מכירה. לחיצה על כותרת עמודה ממיינת, ומעבר עם העכבר על אות מציג את המשקל שלו.</p>
+    <p class="eyebrow">Dashboard</p>
+    <h2>Watchlist with rule-based signals</h2>
+    <p class="lede">Each ticker gets technical signals computed in code, a 1–5 score and a Buy / Hold / Sell stance. Click a column to sort, hover a signal to see its weight.</p>
 
-    <div class="tiles" aria-label="סיכום">
-      <div class="tile"><div class="label">במעקב</div><div class="value" id="t-total">–</div></div>
-      <div class="tile"><div class="label"><span class="swatch buy"></span>קנייה</div><div class="value" id="t-Buy">–</div></div>
-      <div class="tile"><div class="label"><span class="swatch hold"></span>החזקה</div><div class="value" id="t-Hold">–</div></div>
-      <div class="tile"><div class="label"><span class="swatch sell"></span>מכירה</div><div class="value" id="t-Sell">–</div></div>
+    <div class="tiles" aria-label="Summary">
+      <div class="tile"><div class="label">Tracking</div><div class="value" id="t-total">–</div></div>
+      <div class="tile"><div class="label"><span class="swatch buy"></span>Buy</div><div class="value" id="t-Buy">–</div></div>
+      <div class="tile"><div class="label"><span class="swatch hold"></span>Hold</div><div class="value" id="t-Hold">–</div></div>
+      <div class="tile"><div class="label"><span class="swatch sell"></span>Sell</div><div class="value" id="t-Sell">–</div></div>
     </div>
 
     <div class="table-card">
@@ -132,93 +131,93 @@ A strong, well-supported uptrend trading right at its yearly high, with momentum
         <table>
           <thead>
             <tr>
-              <th data-sort="name">מניה<span class="arrow-ind"></span></th>
-              <th class="num" data-sort="price">מחיר<span class="arrow-ind"></span></th>
-              <th class="num" data-sort="change_1d_pct">יומי<span class="arrow-ind"></span></th>
-              <th class="num" data-sort="change_3m_pct">3 חודשים<span class="arrow-ind"></span></th>
+              <th data-sort="name">Instrument<span class="arrow-ind"></span></th>
+              <th class="num" data-sort="price">Price<span class="arrow-ind"></span></th>
+              <th class="num" data-sort="change_1d_pct">1D<span class="arrow-ind"></span></th>
+              <th class="num" data-sort="change_3m_pct">3M<span class="arrow-ind"></span></th>
               <th class="num" data-sort="rsi_14">RSI<span class="arrow-ind"></span></th>
-              <th class="num" data-sort="from_52w_high_pct">מהשיא השנתי<span class="arrow-ind"></span></th>
-              <th data-sort="score">ציון<span class="arrow-ind"></span></th>
-              <th data-sort="stance">המלצה<span class="arrow-ind"></span></th>
-              <th>אותות</th>
+              <th class="num" data-sort="from_52w_high_pct">vs 52W high<span class="arrow-ind"></span></th>
+              <th data-sort="score">Score<span class="arrow-ind"></span></th>
+              <th data-sort="stance">Stance<span class="arrow-ind"></span></th>
+              <th>Signals</th>
             </tr>
           </thead>
-          <tbody id="rows"><tr><td colspan="9" class="muted">טוען נתוני הדגמה…</td></tr></tbody>
+          <tbody id="rows"><tr><td colspan="9" class="muted">Loading demo data…</td></tr></tbody>
         </table>
       </div>
     </div>
-    <p class="caption">ההדגמה בנויה מנתוני שוק אמיתיים מ-2 באוקטובר 2026. הדשבורד האמיתי מוגן בסיסמה, כי רשימת מעקב חושפת במה הבעלים מתעניינים.</p>
+    <p class="caption">Demo built from real market data as of October 2, 2026. The live dashboard is password-protected, since a watchlist reveals what its owner tracks.</p>
   </div>
 </section>
 
 <section id="how">
   <div class="wrap">
-    <p class="eyebrow">איך זה עובד</p>
-    <h2>החישובים בקוד, הניסוח ב-AI</h2>
-    <p class="lede">המודל לא רואה מחירים גולמיים ולא את האינטרנט. Python מחשב את המדדים, ו-Claude רק הופך את תמונת המצב הקטנה, שאפשר לבדוק כל מספר בה, למילים.</p>
+    <p class="eyebrow">How it works</p>
+    <h2>Deterministic math, generative narrative</h2>
+    <p class="lede">The model never sees raw prices or the internet. Python computes the indicators; Claude only turns that small, auditable snapshot into words.</p>
 
-    <div class="flow" aria-label="מסלול הבקשה">
-      <div class="step"><b>טלגרם</b><span>המשתמש שולח סימול</span></div>
-      <div class="arrow" aria-hidden="true">←</div>
-      <div class="step"><b>FastAPI + הבוט</b><span>בקרת גישה ומגבלות קצב</span></div>
-      <div class="arrow" aria-hidden="true">←</div>
-      <div class="step"><b>שכבת השוק</b><span>yfinance ← RSI, ממוצעים, תנודתיות, נפח</span></div>
-      <div class="arrow" aria-hidden="true">←</div>
-      <div class="step"><b>Claude API</b><span>מנתח רק את ה-JSON שחושב</span></div>
-      <div class="arrow" aria-hidden="true">←</div>
-      <div class="step"><b>תשובה</b><span>כרטיס מדדים וניתוח מבוסס נתונים</span></div>
+    <div class="flow" aria-label="Request flow">
+      <div class="step"><b>Telegram</b><span>User sends a ticker</span></div>
+      <div class="arrow" aria-hidden="true">→</div>
+      <div class="step"><b>FastAPI + bot</b><span>Access gates, rate limits</span></div>
+      <div class="arrow" aria-hidden="true">→</div>
+      <div class="step"><b>Market layer</b><span>yfinance → RSI, SMA, volatility, volume</span></div>
+      <div class="arrow" aria-hidden="true">→</div>
+      <div class="step"><b>Claude API</b><span>Reasons only over the JSON snapshot</span></div>
+      <div class="arrow" aria-hidden="true">→</div>
+      <div class="step"><b>Reply</b><span>Card + grounded analysis</span></div>
     </div>
 
     <div class="decisions">
       <div class="card">
-        <h3>מבוסס נתונים מהיסוד</h3>
-        <p>כל טענה בניתוח מגיעה משדה בתמונת המצב. הפרומפטים קטנים וזולים, והמודל לא יכול להמציא חדשות, דוחות או מחירי יעד.</p>
+        <h3>Grounded by design</h3>
+        <p>Every claim in the analysis traces back to a field in the snapshot. Prompts are small, cheap and can't invent news, earnings or price targets.</p>
       </div>
       <div class="card">
-        <h3>ההמלצה מחוקים, לא מהמודל</h3>
-        <p>קנייה, החזקה או מכירה נקבעות לפי תנאים קבועים שמכוסים בבדיקות, כך שאפשר להסביר כל המלצה. Claude מתאר את התמונה ולא ממליץ על עסקאות.</p>
+        <h3>Stances from rules, not the LLM</h3>
+        <p>Buy / Hold / Sell comes from fixed, unit-tested conditions, so every stance can be explained. Claude describes the setup and never prescribes trades.</p>
       </div>
       <div class="card">
-        <h3>ממשיך לעבוד גם כשמשהו נופל</h3>
-        <p>אם Claude לא זמין או שתקציב ה-AI היומי נגמר, המשתמשים עדיין מקבלים מיד את כרטיס המדדים המלא.</p>
+        <h3>Graceful degradation</h3>
+        <p>If Claude is down or the daily AI budget is used up, users still get the full indicator card instantly.</p>
       </div>
     </div>
 
-    <h3 class="subhead">איך נבנה הציון</h3>
-    <p class="subtext">האותות: מחיר מול SMA 200, סדר הממוצעים הנעים, ערכי RSI קיצוניים, מומנטום של 3 חודשים, מרחק מהשיא השנתי ונפח מסחר חריג. כל אות חיובי מוסיף נקודה וכל אות שלילי מוריד נקודה, וכל 2 נקודות נטו מזיזות את הציון צעד אחד מ-3, שהוא ניטרלי. החלוקה ב-2 נועדה לאזן את אותות המגמה, שחופפים זה לזה.</p>
+    <h3 class="subhead">How the score is built</h3>
+    <p class="subtext">Signals: price vs. SMA 200, stacked averages, RSI extremes, 3-month momentum, distance from the 52-week high, heavy volume. Each bullish signal counts +1, each bearish −1, and every 2 net points move the score one step from a neutral 3, since the trend signals overlap.</p>
     <div class="scale">
-      <div class="stance-Sell">1<small>מכירה</small></div>
-      <div class="stance-Sell">2<small>מכירה</small></div>
-      <div class="stance-Hold">3<small>החזקה</small></div>
-      <div class="stance-Buy">4<small>קנייה</small></div>
-      <div class="stance-Buy">5<small>קנייה</small></div>
+      <div class="stance-Sell">1<small>Sell</small></div>
+      <div class="stance-Sell">2<small>Sell</small></div>
+      <div class="stance-Hold">3<small>Hold</small></div>
+      <div class="stance-Buy">4<small>Buy</small></div>
+      <div class="stance-Buy">5<small>Buy</small></div>
     </div>
   </div>
 </section>
 
 <section id="security">
   <div class="wrap">
-    <p class="eyebrow">אבטחה</p>
-    <h2>נבנה מתוך הנחה שיש משתמשים עוינים</h2>
-    <p class="lede">הבוט פתוח לכל אחד בטלגרם, ולשרת יש כתובת ציבורית. כל הגנה מכוסה בבדיקות, והממצאים של סקירת אבטחה בלתי תלויה תוקנו.</p>
+    <p class="eyebrow">Security</p>
+    <h2>Built assuming hostile users</h2>
+    <p class="lede">The bot is open to anyone on Telegram and the server has a public URL. Every defense is covered by tests, and an independent security review's findings are fixed.</p>
     <div class="threats">
-      <div class="threat"><h3><span class="ico">✓</span>זרים שמנפחים את חשבון ה-AI</h3><p>Claude נקרא רק עבור רשימת משתמשים מורשים, שנבדקת לפני תקרה יומית גלובלית, ובנוסף יש תקרת הוצאות חודשית.</p></div>
-      <div class="threat"><h3><span class="ico">✓</span>הודעות טלגרם מזויפות</h3><p>הסוד של ה-webhook נבדק בזמן קבוע, והשרת מסרב לעלות עם סוד לדוגמה או קצר מדי.</p></div>
-      <div class="threat"><h3><span class="ico">✓</span>צפייה ברשימת המעקב או שינוי שלה</h3><p>הדשבורד וה-API מוגנים בסיסמה, שהיא חובה בכל פריסה ציבורית. תיעוד ה-API כבוי בפרודקשן.</p></div>
-      <div class="threat"><h3><span class="ico">✓</span>אתרים זדוניים שמנצלים את הדפדפן של הבעלים</h3><p>כותרת בקשה ייעודית חוסמת CSRF, ובדיקת Host מקומית חוסמת DNS rebinding.</p></div>
-      <div class="threat"><h3><span class="ico">✓</span>XSS והזרקות</h3><p>פלט מקודד, רינדור עם <code>textContent</code> בלבד, CSP מבוסס hash, שאילתות SQL עם פרמטרים ובדיקה קפדנית של סימולים.</p></div>
-      <div class="threat"><h3><span class="ico">✓</span>הצפה של הבוט או של השרת</h3><p>מגבלת קצב לכל משתמש, טיפול מקבילי בהודעות, הגבלה על בקשות ל-Yahoo, הגבלת גודל בקשות ומטמונים בגודל מוגבל.</p></div>
-      <div class="threat"><h3><span class="ico">✓</span>דליפת סודות</h3><p>סודות נשמרים רק במשתני סביבה, מחוץ ל-git ולאימג׳ים, ולוגים שהיו חושפים את הטוקן של הבוט מושתקים.</p></div>
-      <div class="threat"><h3><span class="ico">✓</span>שרשרת אספקה</h3><p>קונטיינר בלי הרשאות root, טוקן CI לקריאה בלבד, <code>pip-audit</code> בכל העלאה ועדכוני Dependabot שבועיים.</p></div>
+      <div class="threat"><h3><span class="ico">✓</span>Strangers running up the AI bill</h3><p>Claude is called only for an allowlist of users, checked before a global daily cap, plus a hard monthly spend limit.</p></div>
+      <div class="threat"><h3><span class="ico">✓</span>Forged Telegram updates</h3><p>Webhook secret compared in constant time; the app refuses to start with a placeholder or short secret.</p></div>
+      <div class="threat"><h3><span class="ico">✓</span>Reading or editing the watchlist</h3><p>Dashboard and API behind auth, required on any public deployment; API docs off in production.</p></div>
+      <div class="threat"><h3><span class="ico">✓</span>Malicious sites using the owner's browser</h3><p>A custom request header blocks CSRF; a localhost-only Host check blocks DNS rebinding.</p></div>
+      <div class="threat"><h3><span class="ico">✓</span>XSS and injection</h3><p>Escaped output, <code>textContent</code>-only rendering, a hash-based CSP, parameterized SQL, strict ticker validation.</p></div>
+      <div class="threat"><h3><span class="ico">✓</span>Flooding the bot or server</h3><p>Per-user rate limits, concurrent update handling, capped Yahoo fetches, request size limits, bounded caches.</p></div>
+      <div class="threat"><h3><span class="ico">✓</span>Leaking secrets</h3><p>Secrets only in env vars, kept out of git and images; logging that would expose the bot token is silenced.</p></div>
+      <div class="threat"><h3><span class="ico">✓</span>Supply chain</h3><p>Non-root container, read-only CI token, <code>pip-audit</code> on every push, weekly Dependabot updates.</p></div>
     </div>
   </div>
 </section>
 
 <section id="stack">
   <div class="wrap">
-    <p class="eyebrow">טכנולוגיות</p>
-    <h2>נבנה עם</h2>
-    <div class="stack" dir="ltr">
+    <p class="eyebrow">Stack</p>
+    <h2>Built with</h2>
+    <div class="stack">
       <span>Python 3.12</span><span>python-telegram-bot</span><span>Claude API</span><span>FastAPI</span>
       <span>yfinance</span><span>pandas</span><span>SQLite</span><span>pytest</span><span>Ruff</span>
       <span>GitHub Actions</span><span>Docker</span>
@@ -228,19 +227,19 @@ A strong, well-supported uptrend trading right at its yearly high, with momentum
 
 <section class="closing">
   <div class="wrap">
-    <h2>לנסות את הבוט, או לקרוא את הקוד</h2>
-    <p class="lede centered">כרטיסי המדדים פתוחים לכולם. הקוד המלא, הבדיקות והחלטות התכנון נמצאים ב-GitHub.</p>
+    <h2>Try it, or read the code</h2>
+    <p class="lede centered">Indicator cards are open to everyone. The full source, tests and design notes are on GitHub.</p>
     <div class="cta">
-      <a class="btn btn-primary" href="https://t.me/NadavFinancialBot">פתיחה בטלגרם</a>
-      <a class="btn" href="https://github.com/GiliGerson/nadav-bot">לקוד ב-GitHub</a>
+      <a class="btn btn-primary" href="https://t.me/NadavFinancialBot">Open in Telegram</a>
+      <a class="btn" href="https://github.com/GiliGerson/nadav-bot">View on GitHub</a>
     </div>
   </div>
 </section>
 
 <footer>
   <div class="wrap">
-    <span>נבנה על ידי <a href="https://github.com/GiliGerson">גילי גרסון</a></span>
-    <span>פרויקט לימודי, לא ייעוץ השקעות. נתוני השוק מ-Yahoo Finance ועשויים להתעכב.</span>
+    <span>Built by <a href="https://github.com/GiliGerson">Gili Gerson</a></span>
+    <span>Educational project. Not financial advice. Market data from Yahoo Finance, may be delayed.</span>
   </div>
 </footer>
 

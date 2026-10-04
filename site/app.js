@@ -1,28 +1,5 @@
 // Demo dashboard: renders a saved snapshot of real watchlist data (site/data/watchlist.json).
 const STANCE_ORDER = { Buy: 3, Hold: 2, Sell: 1 };
-const STANCE_HE = { Buy: "קנייה", Hold: "החזקה", Sell: "מכירה" };
-// Signal labels come from the bot's API in English; the page shows them in Hebrew.
-const SIGNAL_HE = [
-  [/^Above SMA 200$/, () => "מעל SMA 200"],
-  [/^Below SMA 200$/, () => "מתחת ל-SMA 200"],
-  [/^Averages stacked up$/, () => "ממוצעים בסדר עולה"],
-  [/^Averages stacked down$/, () => "ממוצעים בסדר יורד"],
-  [/^Oversold \(RSI (\d+)\)$/, (m) => `מכירת יתר (RSI ${m[1]})`],
-  [/^Overbought \(RSI (\d+)\)$/, (m) => `קניית יתר (RSI ${m[1]})`],
-  [/^Strong 3M momentum$/, () => "מומנטום חזק ב-3 חודשים"],
-  [/^Weak 3M momentum$/, () => "מומנטום חלש ב-3 חודשים"],
-  [/^Near 52-week high$/, () => "קרוב לשיא השנתי"],
-  [/^Deep drawdown from high$/, () => "ירידה חדה מהשיא"],
-  [/^Up on heavy volume$/, () => "עלייה בנפח מסחר גבוה"],
-  [/^Down on heavy volume$/, () => "ירידה בנפח מסחר גבוה"],
-];
-const signalHe = (label) => {
-  for (const [re, fmt] of SIGNAL_HE) {
-    const m = label.match(re);
-    if (m) return fmt(m);
-  }
-  return label;
-};
 let rows = [];
 let sort = { key: "score", dir: -1 };
 
@@ -36,11 +13,7 @@ const el = (tag, cls, text) => {
 const num = (v, d = 2) =>
   v == null ? "n/a" : v.toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d });
 const pct = (v) => (v == null ? "n/a" : `${v >= 0 ? "+" : ""}${v.toFixed(2)}%`);
-const pctCell = (v) => {
-  const td = el("td", `num ${v == null ? "muted" : v >= 0 ? "up" : "down"}`);
-  td.append(el("span", "ltr", pct(v)));
-  return td;
-};
+const pctCell = (v) => el("td", `num ${v == null ? "muted" : v >= 0 ? "up" : "down"}`, pct(v));
 
 function render() {
   const body = $("rows");
@@ -60,29 +33,27 @@ function render() {
     const tr = el("tr");
     const name = el("td");
     name.append(el("div", "name", r.name || r.ticker), el("div", "ticker", r.ticker));
-    const price = el("td", "num");
-    const priceText = el("span", "ltr", num(r.price));
-    priceText.append(el("span", "muted", ` ${r.currency || ""}`));
-    price.append(priceText);
+    const price = el("td", "num", num(r.price));
+    price.append(el("span", "muted", ` ${r.currency || ""}`));
 
     const score = el("td");
     score.style.whiteSpace = "nowrap";
     const meter = el("span", "meter");
     meter.setAttribute("aria-hidden", "true");
     for (let i = 1; i <= 5; i++) meter.append(el("i", i <= r.score ? "on" : ""));
-    score.append(meter, el("span", "ltr", `${r.score}/5`));
+    score.append(meter, `${r.score}/5`);
 
     const stance = el("td");
     const badge = el("span", `stance stance-${r.stance}`);
-    badge.append(el("span", "dot"), STANCE_HE[r.stance]);
+    badge.append(el("span", "dot"), r.stance);
     stance.append(badge);
 
     const sigs = el("td");
     const chips = el("div", "chips");
     for (const s of r.signals) {
       const chip = el("span", "chip");
-      chip.title = s.bias > 0 ? "אות חיובי: מוסיף נקודה" : "אות שלילי: מוריד נקודה";
-      chip.append(el("b", s.bias > 0 ? "up" : "down", s.bias > 0 ? "▲" : "▼"), signalHe(s.label));
+      chip.title = s.bias > 0 ? "Bullish signal (+1)" : "Bearish signal (−1)";
+      chip.append(el("b", s.bias > 0 ? "up" : "down", s.bias > 0 ? "▲" : "▼"), s.label);
       chips.append(chip);
     }
     sigs.append(chips);
@@ -114,7 +85,7 @@ fetch("data/watchlist.json")
   })
   .catch(() => {
     $("rows").replaceChildren();
-    const td = el("td", "muted", "לא הצלחנו לטעון את נתוני ההדגמה.");
+    const td = el("td", "muted", "Couldn't load the demo data.");
     td.colSpan = 9;
     const tr = el("tr");
     tr.append(td);

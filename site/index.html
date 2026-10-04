@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nadav · AI market analyst in Telegram</title>
+<meta name="description" content="A Telegram bot that turns live market data into grounded, Claude-written analysis, with a watchlist dashboard and rule-based technical signals.">
+<meta property="og:title" content="Nadav · AI market analyst in Telegram">
+<meta property="og:description" content="Live indicators, Claude-written analysis grounded in computed data, and a watchlist dashboard with rule-based signals.">
+<meta name="theme-color" content="#0b0b0b">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230b0b0b'/%3E%3Cpath d='M7 21l6-6 4 4 8-9' stroke='%23fff' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="styles.css">
+<script src="app.js" defer></script>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <a class="logo" href="#top"><span class="logo-mark" aria-hidden="true">📈</span>Nadav</a>
+    <div class="nav-links">
+      <a href="#features">Features</a>
+      <a href="#dashboard">Dashboard</a>
+      <a href="#how">How it works</a>
+      <a href="#security">Security</a>
+    </div>
+    <a class="btn btn-small" href="https://github.com/GiliGerson/nadav-bot">GitHub</a>
+  </div>
+</nav>
+
+<header class="hero" id="top">
+  <div class="wrap">
+    <div>
+      <p class="eyebrow">Telegram bot · Claude API · FastAPI</p>
+      <h1>An AI market analyst that lives in <span>Telegram</span>.</h1>
+      <p>Send a ticker, get live indicators and a concise analysis written by Claude, grounded only in numbers the bot computed itself. A web dashboard tracks a watchlist with rule-based Buy / Hold / Sell signals.</p>
+      <div class="cta">
+        <a class="btn btn-primary" href="https://t.me/NadavFinancialBot">Open in Telegram</a>
+        <a class="btn" href="https://github.com/GiliGerson/nadav-bot">View the code</a>
+      </div>
+      <p class="note">Try <code>/price NVDA</code> or <code>/market</code>. AI write-ups run as a private demo.</p>
+      <div class="stats">
+        <div class="stat"><b>5</b><span>commands</span></div>
+        <div class="stat"><b>107</b><span>automated tests</span></div>
+        <div class="stat"><b>8</b><span>threat classes defended</span></div>
+        <div class="stat"><b>Global</b><span>stocks, crypto, FX, TASE</span></div>
+      </div>
+    </div>
+
+    <div class="phone" aria-label="Example conversation with the bot">
+      <div class="phone-bar">
+        <div class="avatar" aria-hidden="true">N</div>
+        <div><b>Nadav</b><small>bot</small></div>
+      </div>
+      <div class="chat">
+        <div class="bubble out"><span class="cmd">/analyze</span> NVDA</div>
+        <div class="bubble in"><b>NVIDIA Corporation</b> (NVDA)
+🟢 233.95 USD  (+1.34% today)
+1M +4.37% · 3M +19.77%
+52W 164.79 – 235.20 (-0.53% from high)
+RSI(14) 63.0 · Vol(30d) 38.5%
+SMA 20/50/200: 223.75 / 218.12 / 200.38
+<i>As of 2026-10-02</i>
+
+📈 Trend
+NVDA at 233.95 USD sits above all three averages: SMA 20 (223.75, +4.6%), SMA 50 (218.12, +7.3%) and SMA 200 (200.38, +16.8%). The averages are stacked in bullish order (20 &gt; 50 &gt; 200). The 1M move is +4.37% and the 3M move is +19.77%, so most of the gain came earlier in the window.
+
+⚡ Momentum
+RSI(14) is 63.01: firm, but below the 70 overbought mark. Volume is 1.23x its 20-day average, so today's +1.34% move came with above-average participation.
+
+🌊 Risk
+30-day volatility is 38.53%, which is elevated. Price is only 0.53% below the 52-week high of 235.2 and about 42% above the 52-week low of 164.79.
+
+🧭 Bottom line
+A strong, well-supported uptrend trading right at its yearly high, with momentum and volume confirming. Watch the 235.2 52-week high: a close above it on solid volume would extend the trend.
+
+<i>Not financial advice. Data from Yahoo Finance, may be delayed.</i></div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section id="features">
+  <div class="wrap">
+    <p class="eyebrow">Features</p>
+    <h2>Everything a quick market check needs</h2>
+    <p class="lede">Works with US and Tel Aviv stocks, indices, crypto and FX. Minor-unit quotes are converted, so TASE prices read in shekels, not agorot.</p>
+    <div class="grid">
+      <div class="card">
+        <h3><span class="cmd">/analyze NVDA</span> <span class="pill">AI</span></h3>
+        <p>Indicator card plus a Claude-written read on trend, momentum and risk, citing only the computed numbers.</p>
+      </div>
+      <div class="card">
+        <h3><span class="cmd">/price TEVA.TA</span></h3>
+        <p>Instant indicator card: price, 1M / 3M moves, 52-week range, RSI(14), volatility and moving averages.</p>
+      </div>
+      <div class="card">
+        <h3><span class="cmd">/compare AAPL MSFT</span> <span class="pill">AI</span></h3>
+        <p>Side-by-side on 2–4 tickers, ending with which shows the stronger technical setup and why.</p>
+      </div>
+      <div class="card">
+        <h3><span class="cmd">/market</span></h3>
+        <p>Pulse of the S&amp;P 500, Nasdaq, Dow, VIX and TA-125, with AI commentary for demo users.</p>
+      </div>
+      <div class="card">
+        <h3><span class="cmd">btc-usd</span></h3>
+        <p>Just type a ticker: it's a shortcut for <code>/analyze</code>, and works with Hebrew keyboards too.</p>
+      </div>
+      <div class="card">
+        <h3>Watchlist dashboard</h3>
+        <p>A password-protected web view of every tracked ticker, with signals, a 1–5 score and a stance.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="dashboard">
+  <div class="wrap">
+    <p class="eyebrow">Dashboard</p>
+    <h2>Watchlist with rule-based signals</h2>
+    <p class="lede">Each ticker gets technical signals computed in code, a 1–5 score and a Buy / Hold / Sell stance. Click a column to sort, hover a signal to see its weight.</p>
+
+    <div class="tiles" aria-label="Summary">
+      <div class="tile"><div class="label">Tracking</div><div class="value" id="t-total">–</div></div>
+      <div class="tile"><div class="label"><span class="swatch buy"></span>Buy</div><div class="value" id="t-Buy">–</div></div>
+      <div class="tile"><div class="label"><span class="swatch hold"></span>Hold</div><div class="value" id="t-Hold">–</div></div>
+      <div class="tile"><div class="label"><span class="swatch sell"></span>Sell</div><div class="value" id="t-Sell">–</div></div>
+    </div>
+
+    <div class="table-card">
+      <div class="scroll">
+        <table>
+          <thead>
+            <tr>
+              <th data-sort="name">Instrument<span class="arrow-ind"></span></th>
+              <th class="num" data-sort="price">Price<span class="arrow-ind"></span></th>
+              <th class="num" data-sort="change_1d_pct">1D<span class="arrow-ind"></span></th>
+              <th class="num" data-sort="change_3m_pct">3M<span class="arrow-ind"></span></th>
+              <th class="num" data-sort="rsi_14">RSI<span class="arrow-ind"></span></th>
+              <th class="num" data-sort="from_52w_high_pct">vs 52W high<span class="arrow-ind"></span></th>
+              <th data-sort="score">Score<span class="arrow-ind"></span></th>
+              <th data-sort="stance">Stance<span class="arrow-ind"></span></th>
+              <th>Signals</th>
+            </tr>
+          </thead>
+          <tbody id="rows"><tr><td colspan="9" class="muted">Loading demo data…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+    <p class="caption">Demo built from real market data as of October 2, 2026. The live dashboard is password-protected, since a watchlist reveals what its owner tracks.</p>
+  </div>
+</section>
+
+<section id="how">
+  <div class="wrap">
+    <p class="eyebrow">How it works</p>
+    <h2>Deterministic math, generative narrative</h2>
+    <p class="lede">The model never sees raw prices or the internet. Python computes the indicators; Claude only turns that small, auditable snapshot into words.</p>
+
+    <div class="flow" aria-label="Request flow">
+      <div class="step"><b>Telegram</b><span>User sends a ticker</span></div>
+      <div class="arrow" aria-hidden="true">→</div>
+      <div class="step"><b>FastAPI + bot</b><span>Access gates, rate limits</span></div>
+      <div class="arrow" aria-hidden="true">→</div>
+      <div class="step"><b>Market layer</b><span>yfinance → RSI, SMA, volatility, volume</span></div>
+      <div class="arrow" aria-hidden="true">→</div>
+      <div class="step"><b>Claude API</b><span>Reasons only over the JSON snapshot</span></div>
+      <div class="arrow" aria-hidden="true">→</div>
+      <div class="step"><b>Reply</b><span>Card + grounded analysis</span></div>
+    </div>
+
+    <div class="decisions">
+      <div class="card">
+        <h3>Grounded by design</h3>
+        <p>Every claim in the analysis traces back to a field in the snapshot. Prompts are small, cheap and can't invent news, earnings or price targets.</p>
+      </div>
+      <div class="card">
+        <h3>Stances from rules, not the LLM</h3>
+        <p>Buy / Hold / Sell comes from fixed, unit-tested conditions, so every stance can be explained. Claude describes the setup and never prescribes trades.</p>
+      </div>
+      <div class="card">
+        <h3>Graceful degradation</h3>
+        <p>If Claude is down or the daily AI budget is used up, users still get the full indicator card instantly.</p>
+      </div>
+    </div>
+
+    <h3 class="subhead">How the score is built</h3>
+    <p class="subtext">Signals: price vs. SMA 200, stacked averages, RSI extremes, 3-month momentum, distance from the 52-week high, heavy volume. Each bullish signal counts +1, each bearish −1, and every 2 net points move the score one step from a neutral 3, since the trend signals overlap.</p>
+    <div class="scale">
+      <div class="stance-Sell">1<small>Sell</small></div>
+      <div class="stance-Sell">2<small>Sell</small></div>
+      <div class="stance-Hold">3<small>Hold</small></div>
+      <div class="stance-Buy">4<small>Buy</small></div>
+      <div class="stance-Buy">5<small>Buy</small></div>
+    </div>
+  </div>
+</section>
+
+<section id="security">
+  <div class="wrap">
+    <p class="eyebrow">Security</p>
+    <h2>Built assuming hostile users</h2>
+    <p class="lede">The bot is open to anyone on Telegram and the server has a public URL. Every defense is covered by tests, and an independent security review's findings are fixed.</p>
+    <div class="threats">
+      <div class="threat"><h3><span class="ico">✓</span>Strangers running up the AI bill</h3><p>Claude is called only for an allowlist of users, checked before a global daily cap, plus a hard monthly spend limit.</p></div>
+      <div class="threat"><h3><span class="ico">✓</span>Forged Telegram updates</h3><p>Webhook secret compared in constant time; the app refuses to start with a placeholder or short secret.</p></div>
+      <div class="threat"><h3><span class="ico">✓</span>Reading or editing the watchlist</h3><p>Dashboard and API behind auth, required on any public deployment; API docs off in production.</p></div>
+      <div class="threat"><h3><span class="ico">✓</span>Malicious sites using the owner's browser</h3><p>A custom request header blocks CSRF; a localhost-only Host check blocks DNS rebinding.</p></div>
+      <div class="threat"><h3><span class="ico">✓</span>XSS and injection</h3><p>Escaped output, <code>textContent</code>-only rendering, a hash-based CSP, parameterized SQL, strict ticker validation.</p></div>
+      <div class="threat"><h3><span class="ico">✓</span>Flooding the bot or server</h3><p>Per-user rate limits, concurrent update handling, capped Yahoo fetches, request size limits, bounded caches.</p></div>
+      <div class="threat"><h3><span class="ico">✓</span>Leaking secrets</h3><p>Secrets only in env vars, kept out of git and images; logging that would expose the bot token is silenced.</p></div>
+      <div class="threat"><h3><span class="ico">✓</span>Supply chain</h3><p>Non-root container, read-only CI token, <code>pip-audit</code> on every push, weekly Dependabot updates.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="stack">
+  <div class="wrap">
+    <p class="eyebrow">Stack</p>
+    <h2>Built with</h2>
+    <div class="stack">
+      <span>Python 3.12</span><span>python-telegram-bot</span><span>Claude API</span><span>FastAPI</span>
+      <span>yfinance</span><span>pandas</span><span>SQLite</span><span>pytest</span><span>Ruff</span>
+      <span>GitHub Actions</span><span>Docker</span>
+    </div>
+  </div>
+</section>
+
+<section class="closing">
+  <div class="wrap">
+    <h2>Try it, or read the code</h2>
+    <p class="lede centered">Indicator cards are open to everyone. The full source, tests and design notes are on GitHub.</p>
+    <div class="cta">
+      <a class="btn btn-primary" href="https://t.me/NadavFinancialBot">Open in Telegram</a>
+      <a class="btn" href="https://github.com/GiliGerson/nadav-bot">View on GitHub</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>Built by <a href="https://github.com/GiliGerson">Gili Gerson</a></span>
+    <span>Educational project. Not financial advice. Market data from Yahoo Finance, may be delayed.</span>
+  </div>
+</footer>
+
+</body>
+</html>

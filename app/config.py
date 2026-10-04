@@ -3,8 +3,12 @@ import logging
 from functools import lru_cache
 from typing import Annotated
 
-from pydantic import field_validator
+from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
+
+# Placeholder secrets that are public (in this repo), so they must never guard a live webhook.
+KNOWN_PLACEHOLDER_SECRETS = {"change-me", "a-long-random-string_only-letters-digits-_-"}
+MIN_WEBHOOK_SECRET_LENGTH = 32
 
 
 class Settings(BaseSettings):
@@ -35,6 +39,21 @@ class Settings(BaseSettings):
             # Non-numeric entries fail validation at startup rather than silently locking users out.
             return frozenset(int(part) for part in value.replace(" ", "").split(",") if part)
         return value
+
+    @model_validator(mode="after")
+    def _require_real_webhook_secret(self) -> "Settings":
+        # The secret header is the only proof a webhook request came from Telegram. With a
+        # guessable one, anyone could post forged updates "from" an allowlisted user ID.
+        if self.webhook_base_url and (
+            self.webhook_secret in KNOWN_PLACEHOLDER_SECRETS
+            or len(self.webhook_secret) < MIN_WEBHOOK_SECRET_LENGTH
+        ):
+            raise ValueError(
+                f"WEBHOOK_SECRET must be a random string of at least {MIN_WEBHOOK_SECRET_LENGTH} "
+                "characters when WEBHOOK_BASE_URL is set. Generate one with: "
+                'python -c "import secrets; print(secrets.token_urlsafe(32))"'
+            )
+        return self
 
 
 @lru_cache

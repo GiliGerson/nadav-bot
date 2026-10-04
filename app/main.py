@@ -5,6 +5,7 @@ them to the python-telegram-bot Application. Without WEBHOOK_BASE_URL (local
 dev) the same process long-polls Telegram instead. The JSON API and the
 dashboard make the market layer reusable outside Telegram.
 """
+import hmac
 import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -65,7 +66,10 @@ async def telegram_webhook(
     x_telegram_bot_api_secret_token: str | None = Header(default=None),
 ) -> dict:
     # Telegram echoes our secret in this header, so random callers are rejected.
-    if x_telegram_bot_api_secret_token != settings.webhook_secret:
+    # compare_digest takes the same time whatever the input, so the secret can't be guessed
+    # one character at a time from response timing.
+    received = (x_telegram_bot_api_secret_token or "").encode()
+    if not hmac.compare_digest(received, settings.webhook_secret.encode()):
         raise HTTPException(status_code=403, detail="Invalid secret token")
     tg = request.app.state.tg
     await tg.update_queue.put(Update.de_json(await request.json(), tg.bot))

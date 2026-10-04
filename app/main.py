@@ -34,7 +34,9 @@ logger = logging.getLogger("nadav")
 
 DASHBOARD = Path(__file__).parent / "static" / "dashboard.html"
 SECURITY_HEADERS = security_headers(
-    inline_script_hashes(DASHBOARD.read_text()), https=settings.production
+    # Hash the bytes exactly as served: read_text() would normalise CRLF line endings and
+    # produce a hash that blocks the page's own script.
+    inline_script_hashes(DASHBOARD.read_bytes().decode()), https=settings.production
 )
 
 
@@ -143,7 +145,9 @@ async def _snapshot_or_http_error(market: MarketData, ticker: str) -> Snapshot:
         raise HTTPException(status_code=404, detail=f"No data for {ticker.upper()}") from exc
 
 
-@protected.get("/api/snapshot/{ticker}")
+# GETs need the header too: otherwise any site could make the owner's browser fire
+# Yahoo fetches through a local server with <img src="http://localhost:8000/api/...">.
+@protected.get("/api/snapshot/{ticker}", dependencies=[Depends(require_csrf_header)])
 async def snapshot(ticker: str, request: Request) -> dict:
     """Indicator snapshot as JSON (no LLM call)."""
     return (await _snapshot_or_http_error(request.app.state.market, ticker)).to_dict()
@@ -160,7 +164,7 @@ async def dashboard() -> FileResponse:
     return FileResponse(DASHBOARD)
 
 
-@protected.get("/api/watchlist")
+@protected.get("/api/watchlist", dependencies=[Depends(require_csrf_header)])
 async def get_watchlist(request: Request) -> list[dict]:
     """Every watched ticker with its snapshot, signals, score and stance."""
     tickers = request.app.state.watchlist.tickers()

@@ -80,11 +80,11 @@ def test_state_change_with_dashboard_header_is_accepted():
     assert res.status_code == 200
 
 
-def test_dashboard_sends_the_csrf_header_on_every_write():
+def test_dashboard_sends_the_csrf_header_on_every_api_call():
     html = DASHBOARD.read_text()
-    writes = re.findall(r'method: "(POST|DELETE)"', html)
-    assert sorted(writes) == ["DELETE", "POST"]
-    assert html.count(f'"{CSRF_HEADER}": "1"') == len(writes)
+    calls = re.findall(r"await fetch\(", html)
+    assert len(calls) == 3  # load, add, remove
+    assert html.count(f'"{CSRF_HEADER}": "1"') == len(calls)
 
 
 # --- Security headers ---------------------------------------------------------

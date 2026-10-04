@@ -88,3 +88,10 @@ def test_chunked_api_body_is_rejected(load_app):
 def test_small_api_body_reaches_auth(load_app):
     client = TestClient(load_app(PUBLIC_DEPLOYMENT="true", DASHBOARD_PASSWORD=PASSWORD))
     assert client.post("/api/watchlist", json={"ticker": "AAPL"}).status_code == 401
+
+
+def test_api_reads_need_the_dashboard_header(load_app):
+    # Blocks <img src="http://localhost:8000/api/..."> from making the owner's browser hit Yahoo.
+    client = TestClient(load_app(), base_url="http://localhost")
+    assert client.get("/api/snapshot/AAPL").status_code == 403
+    assert client.get("/api/watchlist").status_code == 403

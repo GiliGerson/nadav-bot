@@ -1,3 +1,5 @@
+import re
+
 from app.bot import TELEGRAM_LIMIT, fmt_pct, format_snapshot, parse_command, with_analysis
 from app.market import build_snapshot
 
@@ -37,3 +39,12 @@ def test_parse_command_rejects_non_commands():
     assert parse_command("AAPL") is None
     assert parse_command("/") is None
     assert parse_command("   ") is None
+
+
+def test_truncation_never_splits_an_html_entity():
+    # "&" escapes to "&amp;": cutting the escaped text could leave "&am", which Telegram rejects.
+    for filler in ["&" * 5_000, "a&" * 3_000, "<>" * 3_000]:
+        out = with_analysis("<b>header</b>", filler)
+        assert len(out) <= TELEGRAM_LIMIT
+        body = out.split("\n\n")[1]
+        assert re.fullmatch(r"(?:[^&<>]|&amp;|&lt;|&gt;)*…", body), body[-20:]

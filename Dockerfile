@@ -16,4 +16,5 @@ RUN useradd --create-home --uid 10001 nadav && mkdir -p /app/data && chown nadav
 USER nadav
 
 EXPOSE 8000
-CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+# --proxy-headers: behind a hosting proxy (Render, Fly), log the real client IP and scheme.
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000} --proxy-headers --forwarded-allow-ips=*"]

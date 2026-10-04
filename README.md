@@ -78,7 +78,7 @@ Indicators are computed in pure, unit-tested Python functions. The LLM does what
 - Dashboard and JSON API behind HTTP Basic auth (required once deployed), with a CSRF header check on writes, a hash-based Content-Security-Policy, `no-store` caching, API docs disabled in production and a localhost-only Host check in local mode against DNS rebinding
 - Webhook endpoint verifies Telegram's secret token header (constant-time compare), and the app refuses to start in webhook mode with a placeholder or short secret, since a guessable one would let anyone forge updates from an allowlisted user
 
-**Two run modes, one codebase.** Long polling for local development, FastAPI webhook for production. The same FastAPI app also exposes `/api/snapshot/{ticker}`, so the market layer is reusable beyond Telegram.
+**Two run modes, one codebase.** Long polling for local development, FastAPI webhook for production. The same FastAPI app also exposes `/api/snapshot/{ticker}`, so the market layer is reusable beyond Telegram (send `X-Nadav-Dashboard: 1`, plus the dashboard credentials once deployed).
 
 ## Run it locally
 

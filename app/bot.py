@@ -93,11 +93,16 @@ def compact_line(s: Snapshot) -> str:
 
 def with_analysis(header: str, analysis: str) -> str:
     footer = f"\n\n<i>{DISCLAIMER}</i>"
-    body = escape(analysis)
     room = TELEGRAM_LIMIT - len(header) - len(footer) - 4
-    if len(body) > room:
-        body = body[: room - 1] + "…"
-    return f"{header}\n\n{body}{footer}"
+    if len(escape(analysis)) <= room:
+        return f"{header}\n\n{escape(analysis)}{footer}"
+    # Cut the raw text, then escape. Cutting escaped text could split an entity like "&amp;",
+    # which Telegram rejects as invalid HTML. Every character escapes to at least one, so
+    # dropping the overshoot in raw characters always fits.
+    text = analysis
+    while len(escape(text)) > room - 1:
+        text = text[: len(text) - (len(escape(text)) - (room - 1))]
+    return f"{header}\n\n{escape(text)}…{footer}"
 
 
 def parse_command(text: str) -> tuple[str, list[str]] | None:

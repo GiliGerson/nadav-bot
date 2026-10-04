@@ -188,8 +188,9 @@ def build_snapshot(
 class MarketData:
     """Async facade over yfinance with a small in-memory TTL cache."""
 
-    def __init__(self, ttl_seconds: int = 300) -> None:
+    def __init__(self, ttl_seconds: int = 300, max_entries: int = 1_000) -> None:
         self._ttl = ttl_seconds
+        self._max_entries = max_entries
         self._cache: dict[str, tuple[float, Snapshot]] = {}
 
     async def get_snapshot(self, raw_ticker: str) -> Snapshot:
@@ -199,7 +200,11 @@ class MarketData:
             return cached[1]
         # yfinance is blocking, so keep it off the event loop.
         snapshot = await asyncio.to_thread(self._fetch, ticker)
+        self._cache.pop(ticker, None)
         self._cache[ticker] = (time.monotonic(), snapshot)
+        if len(self._cache) > self._max_entries:
+            # Dicts keep insertion order, so the first key is the oldest fetch.
+            del self._cache[next(iter(self._cache))]
         return snapshot
 
     async def get_many(self, tickers: list[str]) -> list[Snapshot | Exception]:

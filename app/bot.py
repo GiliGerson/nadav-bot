@@ -2,24 +2,26 @@
 from __future__ import annotations
 
 import logging
-import time
 from collections.abc import Awaitable, Callable
 from html import escape
 
 from anthropic import APIError
 from telegram import BotCommand, Message, Update
-from telegram.constants import ChatAction, ParseMode
+from telegram.constants import ChatAction, ChatType, ParseMode
 from telegram.ext import (
     Application,
+    ApplicationHandlerStop,
     CommandHandler,
     ContextTypes,
     MessageHandler,
+    TypeHandler,
     filters,
 )
 
 from app.analysis import Analyst
 from app.config import Settings
 from app.market import MarketData, Snapshot, TickerNotFoundError, normalize_ticker
+from app.ratelimit import RateLimiter
 from app.usage import DailyAIUsage
 
 logger = logging.getLogger(__name__)
@@ -113,14 +115,25 @@ def _deps(context: ContextTypes.DEFAULT_TYPE) -> tuple[Settings, MarketData, Ana
 
 
 def _on_cooldown(context: ContextTypes.DEFAULT_TYPE, user_id: int) -> bool:
-    """Simple per-user limiter so one user can't burn through the LLM budget."""
-    settings = context.bot_data["settings"]
-    last_calls: dict[int, float] = context.bot_data.setdefault("last_llm_call", {})
-    now = time.monotonic()
-    if now - last_calls.get(user_id, float("-inf")) < settings.user_cooldown_seconds:
-        return True
-    last_calls[user_id] = now
-    return False
+    """Per-user gap between analyses, so one user can't burn through the LLM budget."""
+    return not context.bot_data["llm_cooldown"].allow(user_id)
+
+
+async def gate(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Runs before every handler: private chats only, and a per-user rate limit on everything.
+
+    Ignoring groups stops the bot being added to a large chat and spammed from there. The
+    rate limit covers commands that never reach Claude too (/price, /market, typos), since
+    flooding those can still get our IP throttled or banned by Yahoo Finance.
+    """
+    chat, user = update.effective_chat, update.effective_user
+    if chat is None or user is None or chat.type != ChatType.PRIVATE:
+        raise ApplicationHandlerStop
+    limiter: RateLimiter = context.bot_data["rate_limiter"]
+    if not limiter.allow(user.id):
+        if update.effective_message and limiter.should_warn(user.id):
+            await update.effective_message.reply_text("⏳ Too many requests. Try again in a minute.")
+        raise ApplicationHandlerStop
 
 
 async def _typing(update: Update) -> None:
@@ -327,8 +340,12 @@ def build_application(settings: Settings, *, webhook_mode: bool) -> Application:
         market=MarketData(ttl_seconds=settings.cache_ttl_seconds),
         analyst=Analyst(settings.anthropic_api_key, settings.claude_model, settings.bot_language),
         ai_usage=DailyAIUsage(settings.watchlist_db_path, settings.daily_ai_limit),
+        rate_limiter=RateLimiter(settings.user_requests_per_minute, window_seconds=60),
+        llm_cooldown=RateLimiter(1, window_seconds=settings.user_cooldown_seconds),
     )
 
+    # Group -1 runs before the command handlers, and ApplicationHandlerStop ends processing.
+    application.add_handler(TypeHandler(Update, gate), group=-1)
     for name, handler in COMMAND_HANDLERS.items():
         application.add_handler(CommandHandler(name, handler))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, free_text))

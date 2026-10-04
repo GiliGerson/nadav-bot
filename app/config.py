@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     bot_language: str = "en"
     cache_ttl_seconds: int = 300
     user_cooldown_seconds: int = 10
+    user_requests_per_minute: int = 20  # every command, AI or not
     daily_ai_limit: int = 50
     # Telegram user IDs allowed to trigger Claude calls, e.g. "123,456". Empty = nobody.
     # NoDecode: read the env value as plain text instead of JSON, so commas work.

@@ -67,6 +67,8 @@ Indicators are computed in pure, unit-tested Python functions. The LLM does what
 
 **Built for real users, not just a demo.**
 - Per-user cooldown so one user can't burn the API budget
+- Per-user rate limit on every command, AI or not (`USER_REQUESTS_PER_MINUTE`), so nobody can flood the bot into getting our IP throttled by Yahoo; memory for tracked users and cached tickers is bounded
+- Private chats only: the bot ignores groups and channels, so it can't be added to a big chat and spammed
 - Allowlist of Telegram user IDs for Claude calls (`AI_ALLOWED_USER_IDS`), checked before the daily cap so other users never spend the shared budget
 - Global daily cap on Claude calls (`DAILY_AI_LIMIT`, resets at midnight UTC, persisted in SQLite); past it, users still get the indicator card
 - TTL cache so repeated requests for popular tickers don't hit Yahoo again

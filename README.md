@@ -2,6 +2,8 @@
 
 **An AI market analyst that lives in Telegram.** Send a ticker, get live indicators plus a concise, data-grounded analysis written by Claude.
 
+**[Live page →](https://nadav-bot-pearl.vercel.app)** · **[Try the bot in Telegram →](https://t.me/NadavFinancialBot)**
+
 ![Python](https://img.shields.io/badge/Python-3.12-blue) ![FastAPI](https://img.shields.io/badge/FastAPI-webhook-009688) ![Claude API](https://img.shields.io/badge/LLM-Claude%20API-d97757) ![Telegram](https://img.shields.io/badge/Telegram-Bot-26A5E4) ![CI](https://img.shields.io/badge/tests-pytest-green)
 
 <!-- Add a screenshot or GIF of the bot here: it's the first thing people look at -->

@@ -1,0 +1,12 @@
+# Vercel only serves the static landing page in site/. Keep the bot's code and config out
+# of the deployment so it is never detected or run as a serverless function.
+# Leading slashes anchor each rule to the repo root (so site/data/ is still deployed).
+/app/
+/tests/
+/data/
+/requirements*.txt
+/Dockerfile
+/.dockerignore
+/pytest.ini
+/ruff.toml
+/.env*

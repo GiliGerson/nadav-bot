@@ -5,4 +5,4 @@ anthropic>=0.40
 yfinance>=0.2.50
 pandas>=2.2
 numpy>=1.26
-pydantic-settings>=2.7
+pydantic-settings>=2.15.0

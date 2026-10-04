@@ -37,6 +37,9 @@ AI_LIMIT_MESSAGE = (
     "Daily AI analysis limit reached. Try again tomorrow, or use /price for instant indicators."
 )
 AI_RESTRICTED_MESSAGE = "AI analysis is limited to a private demo. Try /price or /market."
+AI_USER_QUOTA_MESSAGE = (
+    "You've used today's free AI analyses. Try again tomorrow, or use /price for instant indicators."
+)
 # /market itself is open to everyone, so it can't point users back to /market.
 AI_RESTRICTED_MARKET_NOTE = "AI commentary is limited to a private demo."
 CONCURRENT_UPDATES = 8
@@ -57,7 +60,8 @@ WELCOME = (
     "/price <code>TEVA.TA</code>: quick snapshot\n"
     "/compare <code>AAPL MSFT</code>: side-by-side\n"
     "/market: pulse of the major indices\n\n"
-    "Tip: just send a ticker like <code>BTC-USD</code> and I'll analyze it.\n\n"
+    "Tip: just send a ticker like <code>BTC-USD</code> and I'll analyze it.\n"
+    "AI analyses are free to try, a few per day.\n\n"
     f"<i>{DISCLAIMER}</i>"
 )
 
@@ -173,18 +177,28 @@ async def _reply_with_analysis(
 ) -> None:
     """Reply with the indicator header, then fill in Claude's analysis if the user may have it.
 
-    Gates, in order: the user allowlist, then the global daily cap. The allowlist comes
-    first so users without access never use up the shared daily budget.
+    The owner (allowlisted IDs) draws on their own daily quota. Everyone else shares a
+    public one: a few calls per person and a cap for all of them together, kept separate
+    so strangers can never use up the owner's budget.
     """
     settings: Settings = context.bot_data["settings"]
+    usage: DailyAIUsage = context.bot_data["ai_usage"]
     user = update.effective_user
-    if user is None or user.id not in settings.ai_allowed_user_ids:
+    public_ai_open = settings.public_ai_per_user_daily > 0 and settings.public_ai_daily_limit > 0
+    if user is not None and user.id in settings.ai_allowed_user_ids:
+        full = usage.try_acquire(("owner", settings.daily_ai_limit))
+    elif user is not None and public_ai_open:
+        full = usage.try_acquire(
+            (f"user:{user.id}", settings.public_ai_per_user_daily),
+            ("public", settings.public_ai_daily_limit),
+        )
+    else:
         await update.effective_message.reply_html(f"{header}\n\n🔒 <i>{restricted_note}</i>")
         return
-    usage: DailyAIUsage = context.bot_data["ai_usage"]
-    if not usage.try_acquire():
-        logger.info("Daily AI limit (%d) reached; sending indicators only", usage.limit)
-        await update.effective_message.reply_html(f"{header}\n\n⏳ <i>{AI_LIMIT_MESSAGE}</i>")
+    if full is not None:
+        logger.info("AI quota %r is full; sending indicators only", full.split(":")[0])
+        note = AI_USER_QUOTA_MESSAGE if full.startswith("user:") else AI_LIMIT_MESSAGE
+        await update.effective_message.reply_html(f"{header}\n\n⏳ <i>{note}</i>")
         return
     placeholder = await update.effective_message.reply_html(f"{header}\n\n🧠 <i>{thinking}</i>")
     await _finish_with_llm(placeholder, header, make_analysis())
@@ -374,7 +388,7 @@ def build_application(settings: Settings, *, webhook_mode: bool) -> Application:
         settings=settings,
         market=MarketData(ttl_seconds=settings.cache_ttl_seconds),
         analyst=Analyst(settings.anthropic_api_key, settings.claude_model, settings.bot_language),
-        ai_usage=DailyAIUsage(settings.watchlist_db_path, settings.daily_ai_limit),
+        ai_usage=DailyAIUsage(settings.watchlist_db_path),
         rate_limiter=RateLimiter(settings.user_requests_per_minute, window_seconds=60),
         llm_cooldown=RateLimiter(1, window_seconds=settings.user_cooldown_seconds),
     )

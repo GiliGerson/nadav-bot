@@ -23,8 +23,12 @@ class Settings(BaseSettings):
     cache_ttl_seconds: int = 300
     user_cooldown_seconds: int = 10
     user_requests_per_minute: int = 20  # every command, AI or not
-    daily_ai_limit: int = 50
-    # Telegram user IDs allowed to trigger Claude calls, e.g. "123,456". Empty = nobody.
+    daily_ai_limit: int = 50  # the owner's own daily Claude calls (allowlisted users)
+    # Everyone else gets a small public quota, so visitors can see the AI analysis without
+    # being able to run up the bill. Set either to 0 to make AI owner-only.
+    public_ai_per_user_daily: int = 3
+    public_ai_daily_limit: int = 30  # all non-allowlisted users together
+    # Telegram user IDs with the owner's quota instead of the public one, e.g. "123,456".
     # NoDecode: read the env value as plain text instead of JSON, so commas work.
     ai_allowed_user_ids: Annotated[frozenset[int], NoDecode] = frozenset()
     log_level: str = "INFO"

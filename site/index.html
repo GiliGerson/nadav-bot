@@ -37,7 +37,7 @@
         <a class="btn btn-primary" href="https://t.me/NadavFinancialBot">Open in Telegram</a>
         <a class="btn" href="https://github.com/GiliGerson/nadav-bot">View the code</a>
       </div>
-      <p class="note">Try <code>/price NVDA</code> or <code>/market</code>. AI write-ups run as a private demo.</p>
+      <p class="note">Try <code>/analyze NVDA</code>: everyone gets 3 free AI analyses a day.</p>
       <div class="stats">
         <div class="stat"><b>5</b><span>commands</span></div>
         <div class="stat"><b>107</b><span>automated tests</span></div>
@@ -99,7 +99,7 @@ A strong, well-supported uptrend trading right at its yearly high, with momentum
       </div>
       <div class="card">
         <h3><span class="cmd">/market</span></h3>
-        <p>Pulse of the S&amp;P 500, Nasdaq, Dow, VIX and TA-125, with AI commentary for demo users.</p>
+        <p>Pulse of the S&amp;P 500, Nasdaq, Dow, VIX and TA-125, with AI commentary on top.</p>
       </div>
       <div class="card">
         <h3><span class="cmd">btc-usd</span></h3>
@@ -201,7 +201,7 @@ A strong, well-supported uptrend trading right at its yearly high, with momentum
     <h2>Built assuming hostile users</h2>
     <p class="lede">The bot is open to anyone on Telegram and the server has a public URL. Every defense is covered by tests, and an independent security review's findings are fixed.</p>
     <div class="threats">
-      <div class="threat"><h3><span class="ico">✓</span>Strangers running up the AI bill</h3><p>Claude is called only for an allowlist of users, checked before a global daily cap, plus a hard monthly spend limit.</p></div>
+      <div class="threat"><h3><span class="ico">✓</span>Strangers running up the AI bill</h3><p>Each visitor gets 3 free AI analyses a day and all visitors share a daily cap, separate from the owner's quota, plus a hard monthly spend limit.</p></div>
       <div class="threat"><h3><span class="ico">✓</span>Forged Telegram updates</h3><p>Webhook secret compared in constant time; the app refuses to start with a placeholder or short secret.</p></div>
       <div class="threat"><h3><span class="ico">✓</span>Editing the watchlist or abusing the API</h3><p>The dashboard is read-only for visitors; edits and the raw API need the owner's password. API docs off in production.</p></div>
       <div class="threat"><h3><span class="ico">✓</span>Malicious sites using the owner's browser</h3><p>A custom request header blocks CSRF; a localhost-only Host check blocks DNS rebinding.</p></div>

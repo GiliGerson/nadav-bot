@@ -20,7 +20,7 @@
 | `/myid` | Your Telegram user ID (for `AI_ALLOWED_USER_IDS`) |
 | just type `btc-usd` | Shortcut for `/analyze` |
 
-AI analysis runs as a private demo: only Telegram users listed in `AI_ALLOWED_USER_IDS` get Claude's write-up. Everyone else still gets the indicator cards, and `/price` and `/market` stay open to all.
+Anyone can try the AI analysis: each person gets 3 free AI write-ups a day (30 a day across all visitors), while the owner, listed in `AI_ALLOWED_USER_IDS`, has a separate quota. Past the limit, users still get the indicator cards, and `/price` stays unlimited.
 
 Works with stocks, indices, crypto, FX and non-US exchanges, including Tel Aviv (`.TA`). Analysis language is configurable (English / Hebrew).
 
@@ -85,7 +85,7 @@ The bot is open to anyone on Telegram and the server has a public URL, so it's b
 
 | Threat | Defense |
 |---|---|
-| Strangers running up the Claude bill | Claude is only called for an allowlist of Telegram user IDs (`AI_ALLOWED_USER_IDS`), checked *before* a global daily cap (`DAILY_AI_LIMIT`, an atomic SQLite counter), so outsiders can't even use up the cap. A hard monthly spend limit on the API account is the last line of defense. |
+| Strangers running up the Claude bill | Visitors share a small public quota: 3 AI calls per person per day (`PUBLIC_AI_PER_USER_DAILY`) and 30 for all of them together (`PUBLIC_AI_DAILY_LIMIT`). The owner's IDs (`AI_ALLOWED_USER_IDS`) draw on a separate quota (`DAILY_AI_LIMIT`), so strangers can't exhaust it. Every quota is reserved atomically in SQLite before Claude is called, all or nothing, so concurrent or refused requests never overshoot or waste a slot. A hard monthly spend limit on the API account is the last line of defense. |
 | Forged Telegram updates "from" an allowlisted user | The webhook's secret header is compared in constant time, the app refuses to start with a placeholder or short secret, and the webhook route only exists in webhook mode. |
 | Someone editing the watchlist or abusing the API | The dashboard is a public, read-only demo list; adding or removing tickers and the raw `/api/snapshot` endpoint need HTTP Basic auth, required (16+ chars) on any public deployment. The Docker image marks itself public, so it can't start without a password. API docs are disabled in production. |
 | Malicious websites acting through the owner's browser | Every API call needs a custom header that cross-site requests can't send (the CORS preflight is never granted), which blocks CSRF. Locally, only `localhost` Host headers are answered, which blocks DNS rebinding. |

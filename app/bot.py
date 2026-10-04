@@ -25,7 +25,9 @@ logger = logging.getLogger(__name__)
 TELEGRAM_LIMIT = 4096
 # Bidi marks and zero-width chars that RTL keyboards (e.g. Hebrew) can prepend to a message.
 # They stop Telegram from tagging "/price AAPL" as a command, so we strip them ourselves.
-INVISIBLE_CHARS = dict.fromkeys(map(ord, "​‎‏‪‫‬‭‮⁦⁧⁨⁩﻿"))
+INVISIBLE_CHARS = dict.fromkeys(
+    map(ord, "\u200b\u200e\u200f\u202a\u202b\u202c\u202d\u202e\u2066\u2067\u2068\u2069\ufeff")
+)
 DISCLAIMER = "Not financial advice. Data from Yahoo Finance, may be delayed."
 MARKET_TICKERS = ["^GSPC", "^IXIC", "^DJI", "^VIX", "^TA125.TA"]
 

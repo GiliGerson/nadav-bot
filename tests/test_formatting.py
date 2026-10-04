@@ -29,8 +29,8 @@ def test_parse_command():
 
 def test_parse_command_strips_rtl_marks():
     # Hebrew keyboards can prepend U+200F, which hides the command from Telegram.
-    assert parse_command("‏/price AAPL") == ("price", ["AAPL"])
-    assert parse_command("⁧/analyze NVDA⁩") == ("analyze", ["NVDA"])
+    assert parse_command("\u200f/price AAPL") == ("price", ["AAPL"])
+    assert parse_command("\u2067/analyze NVDA\u2069") == ("analyze", ["NVDA"])
 
 
 def test_parse_command_rejects_non_commands():

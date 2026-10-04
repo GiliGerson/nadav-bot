@@ -6,8 +6,7 @@
 
 ![Python](https://img.shields.io/badge/Python-3.12-blue) ![FastAPI](https://img.shields.io/badge/FastAPI-webhook-009688) ![Claude API](https://img.shields.io/badge/LLM-Claude%20API-d97757) ![Telegram](https://img.shields.io/badge/Telegram-Bot-26A5E4) ![CI](https://img.shields.io/badge/tests-pytest-green)
 
-<!-- Add a screenshot or GIF of the bot here: it's the first thing people look at -->
-<!-- ![Demo](docs/demo.gif) -->
+![Nadav landing page: an example /analyze conversation with live indicators and Claude's analysis](docs/landing.png)
 
 ## What it does
 
@@ -26,7 +25,7 @@ Works with stocks, indices, crypto, FX and non-US exchanges, including Tel Aviv 
 
 **Watchlist dashboard.** The same server hosts a public, read-only web dashboard (`/`) for tracking tickers; only the owner can change the list. Each one gets live indicators, a set of technical signals (▲ bullish / ▼ bearish), a 1-5 score and a Buy / Hold / Sell stance. The list is stored in SQLite.
 
-<!-- ![Dashboard](docs/dashboard.png) -->
+![Watchlist dashboard: live indicators, technical signals, a 1-5 score and a Buy / Hold / Sell stance per ticker](docs/dashboard.png)
 
 ## Architecture
 

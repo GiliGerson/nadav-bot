@@ -15,7 +15,9 @@ class Settings(BaseSettings):
     bot_language: str = "en"
     cache_ttl_seconds: int = 300
     user_cooldown_seconds: int = 10
+    daily_ai_limit: int = 50
     log_level: str = "INFO"
+    # SQLite file shared by the watchlist and the daily AI usage counter.
     watchlist_db_path: str = "data/watchlist.db"
 
     webhook_base_url: str | None = None

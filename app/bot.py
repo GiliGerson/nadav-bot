@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import logging
 import time
+from collections.abc import Awaitable, Callable
 from html import escape
 
 from anthropic import APIError
@@ -19,6 +20,7 @@ from telegram.ext import (
 from app.analysis import Analyst
 from app.config import Settings
 from app.market import MarketData, Snapshot, TickerNotFoundError, normalize_ticker
+from app.usage import DailyAIUsage
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +31,9 @@ INVISIBLE_CHARS = dict.fromkeys(
     map(ord, "\u200b\u200e\u200f\u202a\u202b\u202c\u202d\u202e\u2066\u2067\u2068\u2069\ufeff")
 )
 DISCLAIMER = "Not financial advice. Data from Yahoo Finance, may be delayed."
+AI_LIMIT_MESSAGE = (
+    "Daily AI analysis limit reached. Try again tomorrow, or use /price for instant indicators."
+)
 MARKET_TICKERS = ["^GSPC", "^IXIC", "^DJI", "^VIX", "^TA125.TA"]
 
 COMMANDS = [
@@ -135,7 +140,24 @@ async def _fetch_or_reply(update: Update, market: MarketData, raw: str) -> Snaps
     return None
 
 
-async def _finish_with_llm(placeholder: Message, header: str, coro) -> None:
+async def _reply_with_analysis(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+    header: str,
+    thinking: str,
+    make_analysis: Callable[[], Awaitable[str]],
+) -> None:
+    """Reply with the indicator header, then fill in Claude's analysis if today's cap allows."""
+    usage: DailyAIUsage = context.bot_data["ai_usage"]
+    if not usage.try_acquire():
+        logger.info("Daily AI limit (%d) reached; sending indicators only", usage.limit)
+        await update.effective_message.reply_html(f"{header}\n\n⏳ <i>{AI_LIMIT_MESSAGE}</i>")
+        return
+    placeholder = await update.effective_message.reply_html(f"{header}\n\n🧠 <i>{thinking}</i>")
+    await _finish_with_llm(placeholder, header, make_analysis())
+
+
+async def _finish_with_llm(placeholder: Message, header: str, coro: Awaitable[str]) -> None:
     try:
         analysis = await coro
         await placeholder.edit_text(with_analysis(header, analysis), parse_mode=ParseMode.HTML)
@@ -181,8 +203,7 @@ async def analyze(
     if not snapshot:
         return
     header = format_snapshot(snapshot)
-    placeholder = await update.effective_message.reply_html(f"{header}\n\n🧠 <i>Analyzing…</i>")
-    await _finish_with_llm(placeholder, header, analyst.analyze(snapshot))
+    await _reply_with_analysis(update, context, header, "Analyzing…", lambda: analyst.analyze(snapshot))
 
 
 async def compare(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -207,8 +228,7 @@ async def compare(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         return
 
     header = "⚖️ <b>Comparison</b>\n" + "\n".join(compact_line(s) for s in results)
-    placeholder = await update.effective_message.reply_html(f"{header}\n\n🧠 <i>Comparing…</i>")
-    await _finish_with_llm(placeholder, header, analyst.compare(results))
+    await _reply_with_analysis(update, context, header, "Comparing…", lambda: analyst.compare(results))
 
 
 async def market_pulse(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -224,8 +244,9 @@ async def market_pulse(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         return
 
     header = "🌍 <b>Market pulse</b>\n" + "\n".join(compact_line(s) for s in snapshots)
-    placeholder = await update.effective_message.reply_html(f"{header}\n\n🧠 <i>Reading the room…</i>")
-    await _finish_with_llm(placeholder, header, analyst.market_pulse(snapshots))
+    await _reply_with_analysis(
+        update, context, header, "Reading the room…", lambda: analyst.market_pulse(snapshots)
+    )
 
 
 async def free_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -278,6 +299,7 @@ def build_application(settings: Settings, *, webhook_mode: bool) -> Application:
         settings=settings,
         market=MarketData(ttl_seconds=settings.cache_ttl_seconds),
         analyst=Analyst(settings.anthropic_api_key, settings.claude_model, settings.bot_language),
+        ai_usage=DailyAIUsage(settings.watchlist_db_path, settings.daily_ai_limit),
     )
 
     for name, handler in COMMAND_HANDLERS.items():

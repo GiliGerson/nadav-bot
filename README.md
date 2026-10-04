@@ -64,6 +64,7 @@ Indicators are computed in pure, unit-tested Python functions. The LLM does what
 
 **Built for real users, not just a demo.**
 - Per-user cooldown so one user can't burn the API budget
+- Global daily cap on Claude calls (`DAILY_AI_LIMIT`, resets at midnight UTC, persisted in SQLite); past it, users still get the indicator card
 - TTL cache so repeated requests for popular tickers don't hit Yahoo again
 - Blocking yfinance calls run in a thread pool so the event loop stays responsive
 - Graceful degradation: if Claude is down, users still get the indicator card

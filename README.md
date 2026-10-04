@@ -46,7 +46,10 @@ app/
 ├── signals.py    # Rule-based technical signals -> 1-5 score -> Buy / Hold / Sell
 ├── watchlist.py  # SQLite-backed watchlist
 ├── analysis.py   # Prompts + Claude API client
-├── bot.py        # Telegram handlers, formatting, rate limiting
+├── usage.py      # Global daily cap on Claude calls (SQLite counter)
+├── bot.py        # Telegram handlers, formatting, access gates
+├── ratelimit.py  # Per-user sliding-window rate limiter, bounded memory
+├── security.py   # Dashboard auth, CSRF guard, security headers
 ├── main.py       # FastAPI: webhook, dashboard, /api/watchlist, /api/snapshot/{ticker}
 ├── polling.py    # Bot-only local entry point (no public URL needed)
 ├── config.py     # Typed settings via pydantic-settings
@@ -66,19 +69,28 @@ The dashboard's Buy / Hold / Sell is computed in `signals.py` from fixed conditi
 Indicators are computed in pure, unit-tested Python functions. The LLM does what it's good at, which is turning numbers into a readable story, and none of what it's bad at, which is arithmetic.
 
 **Built for real users, not just a demo.**
-- Per-user cooldown so one user can't burn the API budget
-- Per-user rate limit on every command, AI or not (`USER_REQUESTS_PER_MINUTE`), so nobody can flood the bot into getting our IP throttled by Yahoo; memory for tracked users and cached tickers is bounded
-- Private chats only: the bot ignores groups and channels, so it can't be added to a big chat and spammed
-- Allowlist of Telegram user IDs for Claude calls (`AI_ALLOWED_USER_IDS`), checked before the daily cap so other users never spend the shared budget
-- Global daily cap on Claude calls (`DAILY_AI_LIMIT`, resets at midnight UTC, persisted in SQLite); past it, users still get the indicator card
+- Graceful degradation: if Claude is down or the daily AI cap is reached, users still get the indicator card
 - TTL cache so repeated requests for popular tickers don't hit Yahoo again
-- Blocking yfinance calls run in a thread pool so the event loop stays responsive
-- Graceful degradation: if Claude is down, users still get the indicator card
-- HTML escaping on everything, plus truncation to Telegram's 4096-char limit
-- Dashboard and JSON API behind HTTP Basic auth (required once deployed), with a CSRF header check on writes, a hash-based Content-Security-Policy, `no-store` caching, API docs disabled in production and a localhost-only Host check in local mode against DNS rebinding
-- Webhook endpoint verifies Telegram's secret token header (constant-time compare), and the app refuses to start in webhook mode with a placeholder or short secret, since a guessable one would let anyone forge updates from an allowlisted user
+- Blocking yfinance calls run in a thread pool, and up to 8 updates are handled concurrently, so one slow request never stalls everyone else
+- Per-user cooldown between AI analyses, on top of the limits in [Security](#security)
+- Replies fit Telegram's 4096-char limit
 
 **Two run modes, one codebase.** Long polling for local development, FastAPI webhook for production. The same FastAPI app also exposes `/api/snapshot/{ticker}`, so the market layer is reusable beyond Telegram (send `X-Nadav-Dashboard: 1`, plus the dashboard credentials once deployed).
+
+## Security
+
+The bot is open to anyone on Telegram and the server has a public URL, so it's built assuming hostile users. Each defense below is covered by tests, and the codebase went through an independent security review whose findings are fixed.
+
+| Threat | Defense |
+|---|---|
+| Strangers running up the Claude bill | Claude is only called for an allowlist of Telegram user IDs (`AI_ALLOWED_USER_IDS`), checked *before* a global daily cap (`DAILY_AI_LIMIT`, an atomic SQLite counter), so outsiders can't even use up the cap. A hard monthly spend limit on the API account is the last line of defense. |
+| Forged Telegram updates "from" an allowlisted user | The webhook's secret header is compared in constant time, the app refuses to start with a placeholder or short secret, and the webhook route only exists in webhook mode. |
+| Someone reading or editing the owner's watchlist | The dashboard and API sit behind HTTP Basic auth, required (16+ chars) on any public deployment. The Docker image marks itself public, so it can't start without a password. API docs are disabled in production. |
+| Malicious websites acting through the owner's browser | Every API call needs a custom header that cross-site requests can't send (the CORS preflight is never granted), which blocks CSRF. Locally, only `localhost` Host headers are answered, which blocks DNS rebinding. |
+| XSS and injection | Telegram output is HTML-escaped (truncated *before* escaping, so entities are never split), the dashboard renders with `textContent` only, and a Content-Security-Policy allows just the page's own script by SHA-256 hash. SQL is parameterized and tickers are validated against a strict regex. |
+| Flooding the bot or the server | A per-user rate limit on every command (`USER_REQUESTS_PER_MINUTE`), capped parallel Yahoo fetches, cached "not found" results, a 4 KB body limit on API writes (FastAPI parses bodies before auth runs) and bounded in-memory caches. Group chats are ignored. |
+| Leaking secrets or personal data | Secrets live only in env vars, kept out of git and Docker images (`.gitignore`, `.dockerignore`). HTTP request logging is silenced because Telegram URLs contain the bot token. Personal data is served with `no-store`. |
+| Supply chain and infrastructure | The container runs as an unprivileged user, CI has a read-only token and runs `pip-audit`, and Dependabot opens weekly update PRs. |
 
 ## Run it locally
 
@@ -102,17 +114,18 @@ For the bot alone, `python -m app.polling` works too.
 Any host that runs Docker works (Render, Railway, Fly.io):
 
 1. Deploy this repo using the included `Dockerfile`.
-2. Set the env vars from `.env.example`, including `WEBHOOK_BASE_URL` (your app's public URL) a `DASHBOARD_PASSWORD` of 16+ characters, and a random `WEBHOOK_SECRET` of 32+ characters (`python -c "import secrets; print(secrets.token_urlsafe(32))"`).
-3. On startup the app registers its webhook with Telegram automatically. Check `GET /health`.
+2. Set the env vars from `.env.example`, including `WEBHOOK_BASE_URL` (your app's public URL), a `DASHBOARD_PASSWORD` of 16+ characters, and a random `WEBHOOK_SECRET` of 32+ characters (`python -c "import secrets; print(secrets.token_urlsafe(32))"`).
+3. Attach a persistent disk at `/app/data`. Without one, the watchlist and the daily AI counter reset on every deploy.
+4. On startup the app registers its webhook with Telegram automatically. Check `GET /health`.
 
 ## Tests
 
 ```bash
-pytest -q        # indicator math, prompt grounding (mocked Claude client), formatting/escaping
+pytest -q        # indicators, signals, prompt grounding (mocked Claude), access control, security
 ruff check .
 ```
 
-CI runs both on every push via GitHub Actions.
+CI runs both on every push via GitHub Actions, plus `pip-audit` for known vulnerabilities in dependencies.
 
 ## Roadmap
 
